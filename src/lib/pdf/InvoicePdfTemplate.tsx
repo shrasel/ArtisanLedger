@@ -10,7 +10,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     color: '#18191B',
     fontSize: 9,
-    lineHeight: 1.4,
   },
   header: {
     borderBottomWidth: 1.5,
@@ -21,6 +20,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
+  brandContainer: {
+    maxWidth: '75%',
+  },
   brandTitle: {
     fontFamily: 'Times-Roman',
     fontSize: 22,
@@ -28,12 +30,14 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     color: '#18191B',
     textTransform: 'uppercase',
+    lineHeight: 1.15,
+    marginBottom: 4,
   },
   brandSubtitle: {
     fontSize: 8,
     color: '#5C5E62',
     letterSpacing: 1.5,
-    marginTop: 3,
+    lineHeight: 1.2,
     textTransform: 'uppercase',
   },
   statusBadge: {
@@ -329,7 +333,7 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={styles.brandContainer}>
             <Text style={styles.brandTitle}>{organization.companyName || "The Architect's Ledger"}</Text>
             <Text style={styles.brandSubtitle}>Archival Financial Document / Certified Ledger</Text>
           </View>
