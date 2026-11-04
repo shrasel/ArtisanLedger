@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -10,9 +11,9 @@ const config: Config = {
     extend: {
       colors: {
         obsidian: {
-          DEFAULT: '#111215',
-          light: '#1A1C20',
-          border: '#27292E',
+          DEFAULT: 'var(--canvas-bg, #111215)',
+          light: 'var(--panel-bg, #1A1C20)',
+          border: 'var(--panel-border, #27292E)',
         },
         paper: {
           DEFAULT: '#FAF8F5',

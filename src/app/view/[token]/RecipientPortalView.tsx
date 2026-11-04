@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { PinChallenge } from '@/components/invoice/PinChallenge';
 import { InvoicePaperSheet } from '@/components/invoice/InvoicePaperSheet';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import type { Invoice, InvoiceItem, Organization, Client } from '@/db/schema';
 
 interface RecipientPortalViewProps {
@@ -34,8 +35,11 @@ export function RecipientPortalView({
             The Architect's Ledger
           </span>
         </div>
-        <div className="text-ink-ghost tracking-wider uppercase text-[10px]">
-          {unlocked ? 'Secure Certified Session' : 'Encrypted Access Gate'}
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <div className="text-ink-ghost tracking-wider uppercase text-[10px]">
+            {unlocked ? 'Secure Certified Session' : 'Encrypted Access Gate'}
+          </div>
         </div>
       </div>
 

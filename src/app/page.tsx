@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { StatusStamp } from '@/components/invoice/StatusStamp';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,7 @@ export default async function HomePage() {
           </div>
 
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <Link
               href="/login"
               className="text-xs font-mono uppercase tracking-wider text-bone-dark hover:text-paper transition-colors"

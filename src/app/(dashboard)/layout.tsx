@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import { logoutAction } from '../(auth)/actions';
 import { Plus, FileText, Users, Settings, LogOut } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +72,8 @@ export default async function DashboardLayout({
 
           {/* Right Action Items */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
+
             <Link
               href="/invoices/new"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider text-obsidian bg-bone hover:bg-paper font-semibold rounded-[2px] transition-all shadow-sm"
