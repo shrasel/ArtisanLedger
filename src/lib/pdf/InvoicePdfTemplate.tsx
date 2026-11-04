@@ -330,7 +330,7 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
 
   return (
     <Document title={`Invoice ${invoice.invoiceNumber}`} author={organization.companyName}>
-      <Page size="A4" style={styles.page}>
+      <Page size="LETTER" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.brandContainer}>
