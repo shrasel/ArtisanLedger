@@ -20,6 +20,11 @@ export default async function ClientsPage() {
     .where(eq(clients.orgId, session.organization.id))
     .orderBy(desc(clients.createdAt));
 
-  return <ClientsManagerView initialClients={clientsList} />;
+  return (
+    <ClientsManagerView
+      initialClients={clientsList}
+      initialDefaultClientId={session.organization.defaultClientId}
+    />
+  );
 }
 

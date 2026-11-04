@@ -65,6 +65,7 @@ try {
         payment_notes TEXT,
         default_currency TEXT DEFAULT 'USD',
         default_terms TEXT DEFAULT 'NET_30',
+        default_client_id TEXT,
         invoice_prefix TEXT DEFAULT 'INV-',
         next_invoice_number INTEGER DEFAULT 1001,
         default_tax_rate_basis_points INTEGER DEFAULT 0,
@@ -79,6 +80,7 @@ try {
         email TEXT NOT NULL,
         address TEXT,
         phone TEXT,
+        is_default INTEGER DEFAULT 0,
         created_at TEXT DEFAULT (CURRENT_TIMESTAMP)
       );
 
@@ -121,6 +123,13 @@ try {
       CREATE INDEX IF NOT EXISTS idx_items_invoice ON invoice_items(invoice_id);
     `);
   }
+  // Safe idempotent column additions for existing installations
+  try {
+    sqlite.exec('ALTER TABLE clients ADD COLUMN is_default INTEGER DEFAULT 0;');
+  } catch {}
+  try {
+    sqlite.exec('ALTER TABLE organizations ADD COLUMN default_client_id TEXT;');
+  } catch {}
 } catch (err: any) {
   if (err?.code !== 'SQLITE_BUSY') {
     console.error('Database init warning:', err);

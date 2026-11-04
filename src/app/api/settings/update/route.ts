@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { organizations } from '@/db/schema';
+import { organizations, clients } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
         country: body.country || 'US',
         defaultCurrency: body.defaultCurrency || 'USD',
         defaultTerms: body.defaultTerms || 'NET_30',
+        defaultClientId: body.defaultClientId || null,
         invoicePrefix: body.invoicePrefix || 'INV-',
         nextInvoiceNumber: parseInt(body.nextInvoiceNumber, 10) || 1001,
         defaultTaxRateBasisPoints: parseInt(body.defaultTaxRateBasisPoints, 10) || 0,
@@ -38,6 +39,13 @@ export async function POST(req: NextRequest) {
         paymentNotes: body.paymentNotes || null,
       })
       .where(eq(organizations.id, session.organization.id));
+
+    if (body.defaultClientId !== undefined) {
+      await db.update(clients).set({ isDefault: 0 }).where(eq(clients.orgId, session.organization.id));
+      if (body.defaultClientId) {
+        await db.update(clients).set({ isDefault: 1 }).where(eq(clients.id, body.defaultClientId));
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

@@ -8,12 +8,17 @@ import { NewInvoiceClientView } from './NewInvoiceClientView';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NewInvoicePage() {
+export default async function NewInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
   const session = await getSession();
   if (!session || !session.organization) {
     redirect('/login');
   }
 
+  const { clientId } = await searchParams;
   const orgId = session.organization.id;
 
   // Fetch clients for org
@@ -30,15 +35,24 @@ export default async function NewInvoicePage() {
         email: 'sjenkins@metrostudio.com',
         address: '450 Broadway, Suite 800, New York, NY 10013',
         phone: '+1 (212) 555-0144',
+        isDefault: 1,
       })
       .returning();
     clientList = [seededClient];
   }
 
+  // Determine initial selected client: query param > defaultClientId > first isDefault client > first client
+  const targetClientId =
+    clientId ||
+    session.organization.defaultClientId ||
+    clientList.find((c) => c.isDefault === 1)?.id ||
+    clientList[0]?.id;
+
   return (
     <NewInvoiceClientView
       organization={session.organization}
       clientsList={clientList}
+      initialClientId={targetClientId}
     />
   );
 }

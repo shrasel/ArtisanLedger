@@ -34,6 +34,7 @@ export const organizations = sqliteTable('organizations', {
   // Invoice Defaults
   defaultCurrency: text('default_currency').default('USD'),
   defaultTerms: text('default_terms').default('NET_30'), // DUE_ON_RECEIPT, NET_15, NET_30
+  defaultClientId: text('default_client_id'),
   invoicePrefix: text('invoice_prefix').default('INV-'),
   nextInvoiceNumber: integer('next_invoice_number').default(1001),
   defaultTaxRateBasisPoints: integer('default_tax_rate_basis_points').default(0),
@@ -48,6 +49,7 @@ export const clients = sqliteTable('clients', {
   email: text('email').notNull(),
   address: text('address'),
   phone: text('phone'),
+  isDefault: integer('is_default').default(0),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),
 });
 

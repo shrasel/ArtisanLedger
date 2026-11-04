@@ -54,9 +54,13 @@ export function InvoicePaperSheet({
   const [invoiceNumber, setInvoiceNumber] = useState<string>(
     initialInvoice?.invoiceNumber || `${organization.invoicePrefix || 'INV-'}${organization.nextInvoiceNumber || '1001'}`
   );
-  const [selectedClientId, setSelectedClientId] = useState<string>(
-    initialInvoice?.clientId || (clientsList[0]?.id ?? '')
-  );
+  const defaultClientCandidate =
+    initialInvoice?.clientId ||
+    organization.defaultClientId ||
+    clientsList.find((c) => c.isDefault === 1)?.id ||
+    (clientsList[0]?.id ?? '');
+
+  const [selectedClientId, setSelectedClientId] = useState<string>(defaultClientCandidate);
   const [issueDate, setIssueDate] = useState<string>(
     initialInvoice?.issueDate || getRelativeDateString(0)
   );
@@ -501,11 +505,15 @@ export function InvoicePaperSheet({
                     onChange={(e) => setSelectedClientId(e.target.value)}
                     className="w-full bg-paper-dark border border-bone px-3 py-1.5 text-sm font-serif text-ink-primary rounded-[1px] focus:outline-none focus:border-ink-primary transition-colors"
                   >
-                    {localClients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.companyName ? `${client.companyName} (${client.name})` : client.name}
-                      </option>
-                    ))}
+                    {localClients.map((client) => {
+                      const isDef = client.id === organization.defaultClientId || client.isDefault === 1;
+                      const label = client.companyName ? `${client.companyName} (${client.name})` : client.name;
+                      return (
+                        <option key={client.id} value={client.id}>
+                          {isDef ? `★ ${label} [Default]` : label}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

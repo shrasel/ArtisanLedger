@@ -1,4 +1,7 @@
 import React from 'react';
+import { db } from '@/db';
+import { clients } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { SettingsForm } from './SettingsForm';
@@ -11,6 +14,12 @@ export default async function SettingsPage() {
     redirect('/login');
   }
 
+  const clientList = await db
+    .select()
+    .from(clients)
+    .where(eq(clients.orgId, session.organization.id))
+    .orderBy(desc(clients.createdAt));
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -22,11 +31,14 @@ export default async function SettingsPage() {
           Ledger & Payout Settings
         </h1>
         <p className="text-xs font-sans text-bone-dark mt-1">
-          Configure banking wire instructions, default currencies, invoice numbering, and letterhead.
+          Configure banking wire instructions, default currencies, invoice numbering, letterhead, and default billing client.
         </p>
       </div>
 
-      <SettingsForm organization={session.organization} />
+      <SettingsForm
+        organization={session.organization}
+        clientsList={clientList}
+      />
     </div>
   );
 }

@@ -3,14 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Landmark, Settings2, Save, Check, Loader2 } from 'lucide-react';
-import type { Organization } from '@/db/schema';
+import type { Organization, Client } from '@/db/schema';
 import { parsePercentToBasisPoints, formatBasisPointsToPercent } from '@/lib/utils';
 
 interface SettingsFormProps {
   organization: Organization;
+  clientsList?: Client[];
 }
 
-export function SettingsForm({ organization }: SettingsFormProps) {
+export function SettingsForm({ organization, clientsList = [] }: SettingsFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -27,10 +28,11 @@ export function SettingsForm({ organization }: SettingsFormProps) {
     postalCode: organization.postalCode || '',
     country: organization.country || 'US',
     defaultCurrency: organization.defaultCurrency || 'USD',
+    defaultTerms: organization.defaultTerms || 'NET_30',
+    defaultClientId: organization.defaultClientId || '',
     invoicePrefix: organization.invoicePrefix || 'INV-',
     nextInvoiceNumber: organization.nextInvoiceNumber || 1001,
     defaultTaxPercent: ((organization.defaultTaxRateBasisPoints || 0) / 100).toString(),
-    defaultTerms: organization.defaultTerms || 'NET_30',
     bankName: organization.bankName || '',
     accountHolderName: organization.accountHolderName || '',
     routingNumber: organization.routingNumber || '',
@@ -249,6 +251,24 @@ export function SettingsForm({ organization }: SettingsFormProps) {
               <option value="NET_15">Net 15 Days</option>
               <option value="NET_30">Net 30 Days</option>
               <option value="NET_60">Net 60 Days</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+              Default Billing Client
+            </label>
+            <select
+              value={formData.defaultClientId}
+              onChange={(e) => handleChange('defaultClientId', e.target.value)}
+              className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+            >
+              <option value="">(None - select on creation)</option>
+              {clientsList.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.companyName ? `${client.companyName} (${client.name})` : client.name}
+                </option>
+              ))}
             </select>
           </div>
 

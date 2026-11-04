@@ -10,11 +10,13 @@ import { getRelativeDateString } from '@/lib/utils';
 interface NewInvoiceClientViewProps {
   organization: Organization;
   clientsList: Client[];
+  initialClientId?: string;
 }
 
 export function NewInvoiceClientView({
   organization,
   clientsList: initialClients,
+  initialClientId,
 }: NewInvoiceClientViewProps) {
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [initialDraft, setInitialDraft] = useState<{
@@ -26,7 +28,7 @@ export function NewInvoiceClientView({
     notes?: string;
   }>({
     invoiceNumber: `${organization.invoicePrefix || 'INV-'}${organization.nextInvoiceNumber || 1001}`,
-    clientId: initialClients[0]?.id || '',
+    clientId: initialClientId || initialClients[0]?.id || '',
     issueDate: getRelativeDateString(0),
     dueDate: getRelativeDateString(30),
     currency: organization.defaultCurrency || 'USD',
