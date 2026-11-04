@@ -42,3 +42,4 @@ assert.strictEqual(c1.is_default, 0, 'Client 1 should have is_default = 0');
 console.log('  ✓ Client default setting and mutual exclusivity verified successfully.');
 
 console.log('--- All Client Edit & Default Tests Passed! ---');
+

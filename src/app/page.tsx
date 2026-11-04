@@ -67,7 +67,7 @@ export default async function HomePage() {
 
         <h1 className="font-serif text-4xl sm:text-6xl font-bold tracking-tight text-paper leading-[1.1] mb-6">
           Financial Instruments for the <br />
-          <span className="italic font-normal text-bone">Modern Master Practitioner.</span>
+          <span className="italic font-normal text-ink-secondary dark:text-bone">Modern Master Practitioner.</span>
         </h1>
 
         <p className="font-sans text-sm sm:text-base text-bone-dark max-w-2xl mx-auto leading-relaxed mb-10">

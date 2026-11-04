@@ -5,18 +5,19 @@
 @tailwind utilities;
 
 :root {
-  /* Default color-scheme declaration must be light dark */
+  /* Default color-scheme declaration */
   color-scheme: light dark;
 
-  /* Light Theme Variables (Archival Studio Desk) */
+  /* LIGHT THEME VARIABLES (Archival Studio Desk / Limestone Canvas) */
   --canvas-bg: #F0EBE1;
   --panel-bg: #FAF8F5;
   --panel-border: #DED8CE;
   --canvas-text: #18191B;
-  --canvas-text-muted: #5C5E62;
-  --canvas-ghost: #8C8E93;
+  --bone-dark-color: #5C5E62;
+  --text-paper-val: #18191B;
+  --text-ghost-val: #5C5E62;
 
-  /* Static Document Inks for the Living Canvas */
+  /* Static Document Inks for the Living Paper Sheet */
   --paper: #FAF8F5;
   --bone: #E6E1D9;
   --ink-primary: #18191B;
@@ -33,15 +34,52 @@
   color-scheme: light;
 }
 
-/* Dark Theme Variables (Obsidian Slate) */
+/* System media query fallback for dark theme */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(:has(> head > meta[name="color-scheme"][content="light"])) {
+    --canvas-bg: #111215;
+    --panel-bg: #1A1C20;
+    --panel-border: #27292E;
+    --canvas-text: #FAF8F5;
+    --bone-dark-color: #D5CFC5;
+    --text-paper-val: #FAF8F5;
+    --text-ghost-val: #A1A3A8;
+  }
+}
+
+/* DARK THEME VARIABLES (Obsidian Slate Canvas) */
 html.dark,
 :root:has(> head > meta[name="color-scheme"][content="dark"]) {
   --canvas-bg: #111215;
   --panel-bg: #1A1C20;
   --panel-border: #27292E;
   --canvas-text: #FAF8F5;
-  --canvas-text-muted: #D5CFC5;
-  --canvas-ghost: #A1A3A8;
+  --bone-dark-color: #D5CFC5;
+  --text-paper-val: #FAF8F5;
+  --text-ghost-val: #A1A3A8;
+}
+
+/* Explicit light theme enforcement when .dark is NOT present */
+html:not(.dark),
+html.light {
+  --canvas-bg: #F0EBE1;
+  --panel-bg: #FAF8F5;
+  --panel-border: #DED8CE;
+  --canvas-text: #18191B;
+  --bone-dark-color: #5C5E62;
+  --text-paper-val: #18191B;
+  --text-ghost-val: #5C5E62;
+}
+
+/* Dark class always takes precedence */
+html.dark {
+  --canvas-bg: #111215;
+  --panel-bg: #1A1C20;
+  --panel-border: #27292E;
+  --canvas-text: #FAF8F5;
+  --bone-dark-color: #D5CFC5;
+  --text-paper-val: #FAF8F5;
+  --text-ghost-val: #A1A3A8;
 }
 
 body {
@@ -53,15 +91,94 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Adapt general canvas text in light mode outside of dark buttons and the invoice paper sheet */
-html:not(.dark) {
-  /* Headings on the light canvas */
-  .text-paper:not(.bg-ink-primary *):not(.bg-black *):not(button.bg-ink-primary):not(button.bg-black):not(a.bg-ink-primary):not(.bg-obsidian *) {
-    color: #18191B;
-  }
-  .text-bone-dark:not(.bg-ink-primary *):not(.bg-black *):not(.bg-obsidian *) {
-    color: #5C5E62;
-  }
+/* DYNAMIC TEXT CONTRAST FOR LIGHT & DARK THEMES */
+
+/* Ensure text-obsidian is always deep archival carbon ink */
+.text-obsidian,
+[class*="text-obsidian"] {
+  color: #111215 !important;
+}
+
+/* Ensure text-paper adapts cleanly between light & dark themes */
+.text-paper {
+  color: var(--text-paper-val) !important;
+}
+
+/* Hover on text-paper */
+.hover\:text-paper:hover {
+  color: var(--text-paper-val) !important;
+}
+
+/* But dark buttons, badges, and dark containers preserve high-contrast white text */
+.bg-ink-primary .text-paper,
+.bg-black .text-paper,
+button.bg-ink-primary,
+button.bg-black,
+a.bg-ink-primary,
+a.bg-black,
+.bg-ink-primary *,
+.bg-black *,
+.bg-status-hunter.text-paper,
+.bg-status-vermilion.text-paper {
+  --text-paper-val: #FAF8F5 !important;
+  color: #FAF8F5 !important;
+}
+
+/* Ensure secondary text adapts cleanly */
+.text-bone-dark,
+[class*="text-bone-dark"]:not(:hover) {
+  color: var(--bone-dark-color) !important;
+}
+
+/* In light mode, ensure bone text on canvas is readable pencil graphite */
+html:not(.dark) .text-bone:not(.bg-ink-primary *):not(.bg-black *) {
+  color: #5C5E62 !important;
+}
+
+/* In light mode, adapt ghost text on the canvas to readable graphite */
+html:not(.dark) .text-ink-ghost:not(.bg-paper *):not(.bg-ink-primary *):not(.bg-black *) {
+  color: #5C5E62 !important;
+}
+
+/* In light mode, form inputs and textareas on canvas get crisp white background and dark text */
+html:not(.dark) input.bg-obsidian,
+html:not(.dark) select.bg-obsidian,
+html:not(.dark) textarea.bg-obsidian {
+  background-color: #FFFFFF !important;
+  border-color: #DED8CE !important;
+  color: #18191B !important;
+}
+
+html:not(.dark) input.bg-obsidian::placeholder,
+html:not(.dark) textarea.bg-obsidian::placeholder {
+  color: #8C8E93 !important;
+}
+
+/* In light mode, card panels and table header washes */
+html:not(.dark) .bg-obsidian-light {
+  background-color: #FAF8F5 !important;
+}
+
+html:not(.dark) .border-obsidian-border {
+  border-color: #DED8CE !important;
+}
+
+html:not(.dark) .bg-obsidian\/60 {
+  background-color: rgba(238, 233, 224, 0.7) !important;
+}
+
+/* Dark action buttons on canvas with bg-obsidian */
+html:not(.dark) button.bg-obsidian:not(.bg-bone):not(.bg-ink-primary),
+html:not(.dark) a.bg-obsidian:not(.bg-bone):not(.bg-ink-primary) {
+  background-color: #FAF8F5 !important;
+  border-color: #DED8CE !important;
+  color: #18191B !important;
+}
+
+/* Theme toggle segmented container in light mode */
+html:not(.dark) .inline-flex.bg-obsidian {
+  background-color: #E6E0D4 !important;
+  border-color: #D5CFC5 !important;
 }
 
 /* Custom editorial selection */

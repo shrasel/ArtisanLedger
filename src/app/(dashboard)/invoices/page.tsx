@@ -86,7 +86,7 @@ export default async function InvoicesListPage({
           <div className="font-mono text-2xl font-bold text-status-brass">
             {formatCentsToCurrency(totalOutstandingCents, session.organization.defaultCurrency || 'USD')}
           </div>
-          <span className="text-[10px] font-sans text-bone-dark/60 mt-1 block">
+          <span className="text-[10px] font-sans text-ink-ghost mt-1 block">
             Across draft & dispatched balances
           </span>
         </div>
@@ -98,7 +98,7 @@ export default async function InvoicesListPage({
           <div className="font-mono text-2xl font-bold text-status-hunter">
             {formatCentsToCurrency(totalPaidCents, session.organization.defaultCurrency || 'USD')}
           </div>
-          <span className="text-[10px] font-sans text-bone-dark/60 mt-1 block">
+          <span className="text-[10px] font-sans text-ink-ghost mt-1 block">
             Verified remittances cleared
           </span>
         </div>
@@ -111,7 +111,7 @@ export default async function InvoicesListPage({
             {totalDispatchedCount}{' '}
             <span className="text-xs font-sans text-ink-ghost font-normal">in flight</span>
           </div>
-          <span className="text-[10px] font-sans text-bone-dark/60 mt-1 block">
+          <span className="text-[10px] font-sans text-ink-ghost mt-1 block">
             Encrypted client access links
           </span>
         </div>

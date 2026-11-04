@@ -92,7 +92,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
         aria-label="Switch to light theme"
         className={`p-1.5 rounded-[1px] transition-colors ${
           mounted && theme === 'light'
-            ? 'bg-bone text-obsidian font-bold shadow-xs'
+            ? 'bg-bone text-ink-primary font-bold shadow-xs'
             : 'text-ink-ghost hover:text-paper'
         }`}
       >
@@ -105,7 +105,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
         aria-label="Switch to dark theme"
         className={`p-1.5 rounded-[1px] transition-colors ${
           mounted && theme === 'dark'
-            ? 'bg-bone text-obsidian font-bold shadow-xs'
+            ? 'bg-bone text-ink-primary font-bold shadow-xs'
             : 'text-ink-ghost hover:text-paper'
         }`}
       >
@@ -118,7 +118,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
         aria-label="Follow system theme"
         className={`p-1.5 rounded-[1px] transition-colors ${
           mounted && theme === 'system'
-            ? 'bg-bone text-obsidian font-bold shadow-xs'
+            ? 'bg-bone text-ink-primary font-bold shadow-xs'
             : 'text-ink-ghost hover:text-paper'
         }`}
       >
