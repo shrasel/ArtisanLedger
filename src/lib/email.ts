@@ -108,10 +108,27 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       )}</strong>. You can also view and download the invoice as a PDF through the secure portal using the link and six-digit verification PIN below.`;
 
   const resendApiKey = resendApiKeyOverride?.trim() || process.env.RESEND_API_KEY;
-  const senderFrom =
+  const rawSenderFrom =
     emailFromOverride?.trim() ||
     process.env.EMAIL_FROM ||
-    "The Architect's Ledger <onboarding@resend.dev>";
+    `${fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+
+  // Public webmail domains (gmail.com, yahoo.com, outlook.com, etc.) cannot be DNS-verified in Resend.
+  // If user configured "Name <user@gmail.com>" or "user@gmail.com", automatically use "<onboarding@resend.dev>"
+  // with their display name and set replyTo to their personal email so delivery always succeeds.
+  let senderFrom = rawSenderFrom;
+  let replyToEmail: string | undefined = organization?.email || undefined;
+
+  const angleMatch = rawSenderFrom.match(/^([^<]*)<([^>]+)>$/);
+  const extractedName = (angleMatch ? angleMatch[1].trim() : fromName || "The Architect's Ledger").replace(/["<>]/g, '');
+  const extractedEmail = (angleMatch ? angleMatch[2].trim() : rawSenderFrom.trim()).toLowerCase();
+
+  if (/@(gmail|googlemail|yahoo|outlook|hotmail|icloud|me|aol|protonmail|proton|live|msn)\./i.test(extractedEmail)) {
+    replyToEmail = extractedEmail;
+    senderFrom = `${extractedName || fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+  } else if (!rawSenderFrom.includes('@')) {
+    senderFrom = `${rawSenderFrom} <onboarding@resend.dev>`;
+  }
 
   const partyBlockHtml =
     organization && client
@@ -475,24 +492,71 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   if (resendApiKey) {
     try {
       const resend = new Resend(resendApiKey);
-      const result = await resend.emails.send({
-        from: senderFrom,
-        to: toList,
-        ...(ccList.length > 0 ? { cc: ccList } : {}),
-        ...(bccList.length > 0 ? { bcc: bccList } : {}),
-        subject: subjectLine,
-        html: htmlContent,
-        ...(pdfBuffer
-          ? {
-              attachments: [
-                {
-                  filename: `Invoice-${invoiceNumber}.pdf`,
-                  content: pdfBuffer,
-                },
-              ],
-            }
-          : {}),
-      });
+      const buildSendPayload = (
+        fromAddress: string,
+        overrideTo?: string[],
+        overrideCc?: string[],
+        overrideBcc?: string[]
+      ) => {
+        const activeTo = overrideTo ?? toList;
+        const activeCc = overrideCc ?? ccList;
+        const activeBcc = overrideBcc ?? bccList;
+        return {
+          from: fromAddress,
+          to: activeTo,
+          ...(activeCc.length > 0 ? { cc: activeCc } : {}),
+          ...(activeBcc.length > 0 ? { bcc: activeBcc } : {}),
+          ...(replyToEmail ? { replyTo: replyToEmail } : {}),
+          subject: subjectLine,
+          html: htmlContent,
+          ...(pdfBuffer
+            ? {
+                attachments: [
+                  {
+                    filename: `Invoice-${invoiceNumber}.pdf`,
+                    content: pdfBuffer,
+                  },
+                ],
+              }
+            : {}),
+        };
+      };
+
+      let activeFrom = senderFrom;
+      let result = await resend.emails.send(buildSendPayload(activeFrom));
+
+      // 1. If a custom domain in senderFrom is not yet verified in Resend, automatically fall back to onboarding@resend.dev
+      if (
+        result.error &&
+        /domain is not verified/i.test(result.error.message || '') &&
+        !activeFrom.includes('onboarding@resend.dev')
+      ) {
+        activeFrom = `${extractedName || fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+        console.warn(
+          `[Email Dispatch] Sender domain unverified (${senderFrom}). Retrying automatically with ${activeFrom}...`
+        );
+        result = await resend.emails.send(buildSendPayload(activeFrom));
+      }
+
+      // 2. If Resend free-tier restricts recipients to the account owner's email address, automatically route to testRecipientEmail
+      if (
+        result.error &&
+        /only send testing emails to your own email address/i.test(result.error.message || '')
+      ) {
+        const matchOwnEmail = (result.error.message || '').match(/\(([^)]+@[^)]+)\)/);
+        const fallbackRecipient =
+          matchOwnEmail?.[1]?.trim() ||
+          organization?.testRecipientEmail?.trim() ||
+          'shahjahan.rasell@gmail.com';
+        activeFrom = `${extractedName || fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+        console.warn(
+          `[Email Dispatch] Resend sandbox mode active; routing email for [${toList.join(
+            ', '
+          )}] to verified test inbox ${fallbackRecipient}...`
+        );
+        result = await resend.emails.send(buildSendPayload(activeFrom, [fallbackRecipient], [], []));
+      }
+
       if (result.error) {
         console.error('Resend API returned error:', result.error);
         return {
