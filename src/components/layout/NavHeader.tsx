@@ -132,3 +132,4 @@ export function NavHeader({ companyName }: NavHeaderProps) {
     </header>
   );
 }
+
