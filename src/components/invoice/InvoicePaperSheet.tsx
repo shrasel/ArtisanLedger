@@ -341,21 +341,60 @@ export function InvoicePaperSheet({
     <div className="w-full flex flex-col items-center">
       {/* Top Floating Operational Bar (Seller View) */}
       {!readOnly && (
-        <div className="w-full max-w-[850px] mb-6 flex flex-wrap items-center justify-between gap-4 px-2">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-mono uppercase tracking-widest text-ink-ghost">
-              DOCUMENT STATUS:
-            </span>
-            <StatusStamp status={status} size="sm" />
+        <div className="w-full max-w-[850px] 2xl:max-w-[960px] mb-5 sm:mb-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-3 sm:gap-4 px-0.5 sm:px-2">
+          <div className="flex items-center justify-between sm:justify-start gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-[11px] sm:text-xs font-mono uppercase tracking-widest text-ink-ghost">
+                STATUS:
+              </span>
+              <StatusStamp status={status} size="sm" />
+            </div>
+
+            {/* Compact secondary actions on Mobile */}
+            <div className="flex sm:hidden items-center gap-1.5">
+              {invoiceId && pdfDownloadUrl && (
+                <a
+                  href={pdfDownloadUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-mono uppercase tracking-wider text-bone-dark hover:text-paper bg-obsidian-light border border-obsidian-border rounded-[2px]"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>PDF</span>
+                </a>
+              )}
+              {status !== 'PAID' && (
+                <button
+                  type="button"
+                  onClick={handleMarkPaid}
+                  disabled={isPending}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-mono uppercase tracking-wider text-status-hunter border border-status-hunter/40 rounded-[2px]"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Paid</span>
+                </button>
+              )}
+              {invoiceId && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={isPending}
+                  title="Delete Invoice"
+                  className="inline-flex items-center justify-center p-1.5 text-status-vermilion border border-status-vermilion/40 rounded-[2px]"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
             {invoiceId && (
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-status-vermilion hover:bg-status-vermilion/10 border border-status-vermilion/40 rounded-[2px] transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-status-vermilion hover:bg-status-vermilion/10 border border-status-vermilion/40 rounded-[2px] transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete</span>
@@ -367,7 +406,7 @@ export function InvoicePaperSheet({
                 href={pdfDownloadUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-bone-dark hover:text-paper bg-obsidian-light hover:bg-obsidian-border border border-obsidian-border rounded-[2px] transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-bone-dark hover:text-paper bg-obsidian-light hover:bg-obsidian-border border border-obsidian-border rounded-[2px] transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>PDF Document</span>
@@ -379,7 +418,7 @@ export function InvoicePaperSheet({
                 type="button"
                 onClick={handleMarkPaid}
                 disabled={isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-status-hunter hover:bg-status-hunter/10 border border-status-hunter/40 rounded-[2px] transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-status-hunter hover:bg-status-hunter/10 border border-status-hunter/40 rounded-[2px] transition-colors"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Mark as Paid</span>
@@ -390,9 +429,9 @@ export function InvoicePaperSheet({
               type="button"
               onClick={() => handleSave()}
               disabled={isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono uppercase tracking-wider text-paper bg-obsidian-light hover:bg-obsidian-border border border-obsidian-border rounded-[2px] transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:py-1.5 text-xs font-mono uppercase tracking-wider text-paper bg-obsidian-light hover:bg-obsidian-border border border-obsidian-border rounded-[2px] transition-colors shadow-sm"
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="w-3.5 h-3.5 shrink-0" />
               <span>{isPending ? 'Saving...' : 'Save Draft'}</span>
             </button>
 
@@ -400,9 +439,9 @@ export function InvoicePaperSheet({
               type="button"
               onClick={() => setShowDispatchStudio(true)}
               disabled={isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono uppercase tracking-wider text-obsidian bg-bone hover:bg-paper font-semibold rounded-[2px] transition-colors shadow-md"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:py-1.5 text-xs font-mono uppercase tracking-wider text-obsidian bg-bone hover:bg-paper font-semibold rounded-[2px] transition-colors shadow-md"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-3.5 h-3.5 shrink-0" />
               <span>{isPending ? 'Dispatching...' : 'Dispatch Invoice'}</span>
             </button>
           </div>
@@ -411,7 +450,7 @@ export function InvoicePaperSheet({
 
       {/* Recipient Action Bar */}
       {isRecipientView && (
-        <div className="w-full max-w-[850px] mb-6 flex items-center justify-between gap-4 px-2">
+        <div className="w-full max-w-[850px] 2xl:max-w-[960px] mb-5 sm:mb-6 flex flex-wrap items-center justify-between gap-3 px-1 sm:px-2">
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono uppercase tracking-widest text-ink-ghost">
               VERIFIED PORTAL:
@@ -423,7 +462,7 @@ export function InvoicePaperSheet({
               href={pdfDownloadUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase tracking-widest text-paper bg-obsidian hover:bg-obsidian-light border border-obsidian-border rounded-[2px] shadow-sm transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-mono uppercase tracking-widest text-paper bg-obsidian hover:bg-obsidian-light border border-obsidian-border rounded-[2px] shadow-sm transition-colors"
             >
               <Download className="w-4 h-4" />
               <span>Download Official PDF</span>
@@ -435,7 +474,7 @@ export function InvoicePaperSheet({
       {/* Feedback Alert */}
       {feedbackMessage && (
         <div
-          className={`w-full max-w-[850px] mb-4 p-3 rounded-[2px] text-xs font-mono flex items-center justify-between border ${
+          className={`w-full max-w-[850px] 2xl:max-w-[960px] mb-4 p-3 rounded-[2px] text-xs font-mono flex items-center justify-between border ${
             feedbackMessage.type === 'success'
               ? 'bg-[#2B4C3F]/10 border-status-hunter text-status-hunter'
               : 'bg-[#C84630]/10 border-status-vermilion text-status-vermilion'
@@ -453,7 +492,7 @@ export function InvoicePaperSheet({
 
       {/* THE ARCHIVAL COTTON PAPER CANVAS */}
       <div
-        className="w-full max-w-[850px] bg-paper text-ink-primary shadow-sheet border border-bone rounded-[2px] p-8 md:p-14 relative overflow-hidden transition-all duration-300"
+        className="w-full max-w-[850px] 2xl:max-w-[960px] bg-paper text-ink-primary shadow-sheet border border-bone rounded-[2px] p-4 sm:p-8 md:p-14 2xl:p-16 relative overflow-hidden transition-all duration-300"
         style={{
           backgroundImage:
             'radial-gradient(#18191B 0.35px, transparent 0.35px), radial-gradient(#18191B 0.35px, #FAF8F5 0.35px)',
@@ -854,16 +893,16 @@ export function InvoicePaperSheet({
         </div>
 
         {/* TEAR-OFF WIRE TRANSFER REMITTANCE STUB */}
-        <div className="relative pt-6">
-          <div className="relative flex items-center justify-center my-6">
+        <div className="relative pt-4 sm:pt-6">
+          <div className="relative flex items-center justify-center my-4 sm:my-6">
             <div className="w-full border-t border-dashed border-ink-ghost/60" />
-            <span className="absolute bg-paper px-4 font-mono text-[9px] uppercase tracking-[0.25em] text-ink-ghost select-none">
-              &bull; TEAR-OFF REMITTANCE ADVICE / WIRE TRANSFER INSTRUCTIONS &bull;
+            <span className="bg-paper px-2 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center">
+              &bull; TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS &bull;
             </span>
           </div>
 
-          <div className="p-5 border border-bone bg-paper-dark/30 rounded-[1px]">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="p-3.5 sm:p-5 border border-bone bg-paper-dark/30 rounded-[1px]">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <div>
                 <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
                   Beneficiary Bank

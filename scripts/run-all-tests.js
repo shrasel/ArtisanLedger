@@ -293,7 +293,25 @@ assert.ok(
   !sheetSource.includes('450000'),
   'InvoicePaperSheet.tsx must not pre-fill sample 450000 cent amount'
 );
-console.log('  ✓ Passed: Editorial color palette, light/dark contrast, and clean new-draft defaults verified.\n');
+
+const navHeaderPath = path.join(rootDir, 'src', 'components', 'layout', 'NavHeader.tsx');
+assert.ok(fs.existsSync(navHeaderPath), 'NavHeader.tsx must exist for responsive navigation');
+const navHeaderSource = fs.readFileSync(navHeaderPath, 'utf8');
+assert.ok(
+  navHeaderSource.includes('aria-label="Mobile Navigation"') &&
+    navHeaderSource.includes('aria-label="Primary Navigation"'),
+  'NavHeader.tsx must provide both Mobile and Primary navigation bars'
+);
+
+const invoicesPageSource = fs.readFileSync(
+  path.join(rootDir, 'src', 'app', '(dashboard)', 'invoices', 'page.tsx'),
+  'utf8'
+);
+assert.ok(
+  invoicesPageSource.includes('md:hidden') && invoicesPageSource.includes('hidden md:block'),
+  'Invoices page must render mobile cards (md:hidden) and desktop table (hidden md:block)'
+);
+console.log('  ✓ Passed: Editorial color palette, light/dark contrast, and universal responsive layouts verified.\n');
 
 // ---------------------------------------------------------------------------
 // SUITE 7: Invoice & Client Deletion Integrity

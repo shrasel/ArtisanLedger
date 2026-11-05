@@ -113,6 +113,8 @@ export function DispatchInvoiceModal({
 
   // Preview tab: 'invoice' (exact client document) or 'email' (HTML email envelope)
   const [previewTab, setPreviewTab] = useState<'invoice' | 'email'>('invoice');
+  // Mobile/Tablet active pane ('compose' vs 'preview') for < 1024px screens
+  const [mobilePane, setMobilePane] = useState<'compose' | 'preview'>('compose');
 
   if (!isOpen) return null;
 
@@ -247,17 +249,17 @@ export function DispatchInvoiceModal({
     >
       <div className="w-full max-w-[1260px] bg-paper text-ink-primary border border-bone shadow-sheet rounded-[2px] flex flex-col max-h-[92vh] overflow-hidden">
         {/* Top Modal Header */}
-        <div className="px-6 py-4 bg-paper-dark border-b border-bone flex items-center justify-between shrink-0">
-          <div>
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-paper-dark border-b border-bone flex items-center justify-between gap-2 shrink-0">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-status-brass" />
-              <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-ink-secondary font-bold">
+              <span className="w-2 h-2 rounded-full bg-status-brass shrink-0" />
+              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.18em] sm:tracking-[0.22em] text-ink-secondary font-bold truncate">
                 PRE-DISPATCH REVIEW &amp; EMAIL COMPOSER STUDIO
               </span>
             </div>
             <h2
               id="dispatch-studio-title"
-              className="font-serif text-xl md:text-2xl font-bold text-ink-primary mt-0.5"
+              className="font-serif text-lg sm:text-xl md:text-2xl font-bold text-ink-primary mt-0.5 truncate"
             >
               Review Client Output &amp; Customize Dispatch — {invoiceNumber}
             </h2>
@@ -267,10 +269,56 @@ export function DispatchInvoiceModal({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="p-1.5 text-ink-secondary hover:text-ink-primary border border-transparent hover:border-bone rounded-[2px] transition-colors"
+            className="p-1.5 text-ink-secondary hover:text-ink-primary border border-transparent hover:border-bone rounded-[2px] transition-colors shrink-0"
             title="Close Preview"
           >
             <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mobile / Tablet Pane Switcher (< 1024px) */}
+        <div className="lg:hidden grid grid-cols-3 gap-1 p-2 bg-paper-dark border-b border-bone shrink-0 font-mono text-[10px] sm:text-[11px] uppercase tracking-wider">
+          <button
+            type="button"
+            onClick={() => setMobilePane('compose')}
+            className={`py-2 px-2 rounded-[1px] flex items-center justify-center gap-1 transition-colors ${
+              mobilePane === 'compose'
+                ? 'bg-ink-primary text-paper font-bold'
+                : 'text-ink-secondary hover:text-ink-primary bg-paper'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5 shrink-0" />
+            <span>1. Compose</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobilePane('preview');
+              setPreviewTab('invoice');
+            }}
+            className={`py-2 px-2 rounded-[1px] flex items-center justify-center gap-1 transition-colors ${
+              mobilePane === 'preview' && previewTab === 'invoice'
+                ? 'bg-ink-primary text-paper font-bold'
+                : 'text-ink-secondary hover:text-ink-primary bg-paper'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span>2. Client View</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobilePane('preview');
+              setPreviewTab('email');
+            }}
+            className={`py-2 px-2 rounded-[1px] flex items-center justify-center gap-1 transition-colors ${
+              mobilePane === 'preview' && previewTab === 'email'
+                ? 'bg-ink-primary text-paper font-bold'
+                : 'text-ink-secondary hover:text-ink-primary bg-paper'
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5 shrink-0" />
+            <span>3. Email Card</span>
           </button>
         </div>
 
@@ -280,7 +328,9 @@ export function DispatchInvoiceModal({
           <form
             id="dispatch-email-form"
             onSubmit={handleConfirm}
-            className="lg:col-span-5 p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r border-bone space-y-5 bg-paper"
+            className={`${
+              mobilePane === 'compose' ? 'block' : 'hidden lg:block'
+            } lg:col-span-5 p-4 sm:p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r border-bone space-y-4 sm:space-y-5 bg-paper`}
           >
             <div className="flex items-center justify-between border-b border-bone pb-2.5">
               <div className="flex items-center gap-2">
@@ -514,7 +564,10 @@ export function DispatchInvoiceModal({
                 </label>
                 <button
                   type="button"
-                  onClick={() => setPreviewTab('email')}
+                  onClick={() => {
+                    setPreviewTab('email');
+                    setMobilePane('preview');
+                  }}
                   className="text-[10px] font-mono uppercase tracking-wider text-status-hunter hover:underline"
                 >
                   Preview in Email &rarr;
@@ -545,7 +598,11 @@ export function DispatchInvoiceModal({
           </form>
 
           {/* RIGHT PANE (7 cols): Live Client Invoice View & Email Template Preview */}
-          <div className="lg:col-span-7 flex flex-col bg-[#E8E2D7] overflow-hidden min-h-0">
+          <div
+            className={`${
+              mobilePane === 'preview' ? 'flex' : 'hidden lg:flex'
+            } lg:col-span-7 flex-col bg-[#E8E2D7] overflow-hidden min-h-0`}
+          >
             {/* Preview Mode Switcher Bar */}
             <div className="px-6 py-3 bg-paper-dark border-b border-bone flex flex-wrap items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2">
