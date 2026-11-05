@@ -12,16 +12,13 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   header: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#18191B',
-    paddingBottom: 16,
     marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
   brandContainer: {
-    maxWidth: '75%',
+    width: '100%',
   },
   brandTitle: {
     fontFamily: 'Times-Roman',
@@ -103,7 +100,7 @@ const styles = StyleSheet.create({
     borderColor: '#E6E1D9',
   },
   detailItem: {
-    width: '25%',
+    width: '33.33%',
   },
   detailLabel: {
     fontSize: 7,
@@ -317,17 +314,6 @@ interface InvoicePdfProps {
 }
 
 export function InvoicePdfTemplate({ invoice, items, organization, client }: InvoicePdfProps) {
-  const getStatusStyle = (status: string | null) => {
-    switch (status) {
-      case 'PAID':
-        return styles.statusPaid;
-      case 'DRAFT':
-        return styles.statusDraft;
-      default:
-        return styles.statusVermilion;
-    }
-  };
-
   return (
     <Document title={`Invoice ${invoice.invoiceNumber}`} author={organization.companyName}>
       <Page size="LETTER" style={styles.page}>
@@ -346,18 +332,12 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
               </Text>
             ) : null}
           </View>
-          <View style={[styles.statusBadge, getStatusStyle(invoice.status)]}>
-            <Text>{invoice.status || 'DRAFT'}</Text>
-          </View>
         </View>
 
         {/* Metadata Grid */}
         <View style={styles.metaGrid}>
           <View style={styles.metaCol}>
-            <Text style={styles.metaHeading}>
-              Issuer / Creditor{' '}
-              {organization.entityType === 'INDIVIDUAL' ? '(Individual)' : '(Firm Entity)'}
-            </Text>
+            <Text style={styles.metaHeading}>From</Text>
             {organization.entityType === 'INDIVIDUAL' ? (
               <>
                 <Text style={styles.companyName}>
@@ -394,7 +374,7 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
           </View>
 
           <View style={styles.metaCol}>
-            <Text style={styles.metaHeading}>Debtor / Billed To</Text>
+            <Text style={styles.metaHeading}>Billed to</Text>
             <Text style={styles.companyName}>{client.companyName || client.name}</Text>
             {client.companyName && <Text style={styles.addressLine}>Attn: {client.name}</Text>}
             {client.address && <Text style={styles.addressLine}>{client.address}</Text>}
@@ -415,10 +395,6 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Due Date</Text>
             <Text style={styles.detailValue}>{formatEditorialDate(invoice.dueDate)}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Currency</Text>
-            <Text style={styles.detailValue}>{invoice.currency || 'USD'}</Text>
           </View>
         </View>
 

@@ -167,6 +167,25 @@ assert.ok(
   brandTitleMatch[1].includes('lineHeight'),
   'styles.brandTitle must define explicit lineHeight to prevent subtitle overlap'
 );
+
+const headerBlockMatch = pdfSource.match(/header:\s*\{([^}]+)\}/);
+assert.ok(headerBlockMatch, 'styles.header block must exist');
+assert.ok(
+  !headerBlockMatch[1].includes('borderBottomWidth'),
+  'styles.header must not have an underline border after the letterhead'
+);
+assert.ok(
+  !pdfSource.includes('Issuer / Creditor') && pdfSource.includes('<Text style={styles.metaHeading}>From</Text>'),
+  'PDF sender heading must be "From"'
+);
+assert.ok(
+  !pdfSource.includes('Debtor / Billed To') && pdfSource.includes('<Text style={styles.metaHeading}>Billed to</Text>'),
+  'PDF recipient heading must be "Billed to"'
+);
+assert.ok(
+  !pdfSource.includes('<Text style={styles.detailLabel}>Currency</Text>'),
+  'PDF details bar must not display Currency beside Due Date'
+);
 console.log('  ✓ Passed: PDF Letter geometry and anti-overlap typography rules verified.\n');
 
 // ---------------------------------------------------------------------------
