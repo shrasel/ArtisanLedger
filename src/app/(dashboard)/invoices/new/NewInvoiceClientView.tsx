@@ -36,10 +36,10 @@ export function NewInvoiceClientView({
 
   const [items, setItems] = useState<EditableItem[]>([
     {
-      description: 'Architectural Schematic Documentation & Review',
+      description: '',
       quantity: 1,
-      unitPriceCents: 450000,
-      totalCents: 450000,
+      unitPriceCents: 0,
+      totalCents: 0,
     },
   ]);
 

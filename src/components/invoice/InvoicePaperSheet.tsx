@@ -71,10 +71,10 @@ export function InvoicePaperSheet({
     initialInvoice?.currency || organization.defaultCurrency || 'USD'
   );
   const [notes, setNotes] = useState<string>(
-    initialInvoice?.notes || 'Payment is requested via direct wire transfer or ACH. Thank you for your continued partnership.'
+    initialInvoice?.notes ?? ''
   );
   const [terms, setTerms] = useState<string>(
-    initialInvoice?.termsConditions || 'Net 30 payment terms apply. Balances past due are subject to 1.5% monthly service charge.'
+    initialInvoice?.termsConditions ?? ''
   );
 
   // Line items state
@@ -83,10 +83,10 @@ export function InvoicePaperSheet({
       ? initialItems
       : [
           {
-            description: 'Architectural Design Phase 1: Schematic Documentation',
+            description: '',
             quantity: 1,
-            unitPriceCents: 450000,
-            totalCents: 450000,
+            unitPriceCents: 0,
+            totalCents: 0,
           },
         ]
   );

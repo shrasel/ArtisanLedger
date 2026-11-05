@@ -175,7 +175,29 @@ assert.ok(
   cssSource.includes('.text-obsidian') && cssSource.includes('#111215 !important'),
   '.text-obsidian must be locked to #111215 for legible bone/brass buttons'
 );
-console.log('  ✓ Passed: Editorial color palette and light/dark contrast rules verified.\n');
+
+const newInvoiceViewPath = path.join(
+  rootDir,
+  'src',
+  'app',
+  '(dashboard)',
+  'invoices',
+  'new',
+  'NewInvoiceClientView.tsx'
+);
+const newInvoiceSource = fs.readFileSync(newInvoiceViewPath, 'utf8');
+assert.ok(
+  !newInvoiceSource.includes('450000'),
+  'NewInvoiceClientView.tsx must not pre-fill sample 450000 cent amount'
+);
+
+const sheetPath = path.join(rootDir, 'src', 'components', 'invoice', 'InvoicePaperSheet.tsx');
+const sheetSource = fs.readFileSync(sheetPath, 'utf8');
+assert.ok(
+  !sheetSource.includes('450000'),
+  'InvoicePaperSheet.tsx must not pre-fill sample 450000 cent amount'
+);
+console.log('  ✓ Passed: Editorial color palette, light/dark contrast, and clean new-draft defaults verified.\n');
 
 console.log('==============================================================');
 console.log('   ALL 6 VERIFICATION SUITES PASSED WITH 100% SUCCESS');
