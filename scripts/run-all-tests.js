@@ -282,6 +282,10 @@ assert.ok(
   !newInvoiceSource.includes('450000'),
   'NewInvoiceClientView.tsx must not pre-fill sample 450000 cent amount'
 );
+assert.ok(
+  newInvoiceSource.includes('draftVersion'),
+  'NewInvoiceClientView.tsx must increment draftVersion key so Intent-to-Invoice Copilot always updates the sheet'
+);
 
 const sheetPath = path.join(rootDir, 'src', 'components', 'invoice', 'InvoicePaperSheet.tsx');
 const sheetSource = fs.readFileSync(sheetPath, 'utf8');

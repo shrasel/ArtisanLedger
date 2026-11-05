@@ -23,69 +23,102 @@ function parseIntentFallback(prompt: string): DraftInvoiceToolResult {
     currency: 'USD',
     dueDateOffsetDays: 30,
     items: [],
-    notes: `Generated via Intent-to-Invoice Copilot from prompt: "${prompt}"`,
+    notes: '',
   };
 
   // Detect currency (guarding against CAD drafting / CAD modeling)
   if (/\b(eur|euro|€)\b/i.test(prompt)) result.currency = 'EUR';
   else if (/\b(gbp|pound|£)\b/i.test(prompt)) result.currency = 'GBP';
-  else if (/\b(?:cad\s*\$|c\$|cad\s+dollars?)\b/i.test(prompt) || (/\bcad\b/i.test(prompt) && !/\bcad\s+(?:draft|model|design|file|software)/i.test(prompt))) {
+  else if (
+    /\b(?:cad\s*\$|c\$|cad\s+dollars?)\b/i.test(prompt) ||
+    (/\bcad\b/i.test(prompt) && !/\bcad\s+(?:draft|model|design|file|software|drawing|plan)/i.test(prompt))
+  ) {
     result.currency = 'CAD';
   }
 
   // Detect due date offset
-  const netMatch = prompt.match(/\bnet\s*(\d+)\b/i) || prompt.match(/due\s+(?:in\s+)?(\d+)\s+days/i);
+  const netMatch =
+    prompt.match(/\bnet\s*(\d+)\b/i) || prompt.match(/due\s+(?:in\s+)?(\d+)\s+days/i);
   if (netMatch) {
     result.dueDateOffsetDays = parseInt(netMatch[1], 10);
   } else if (/due\s+on\s+receipt/i.test(prompt) || /immediate/i.test(prompt)) {
     result.dueDateOffsetDays = 0;
   }
 
-  // Detect Client Name
-  // e.g., "Invoice Acme Corp for...", "Bill Studio Mono for...", "Client: Acme Co"
-  const clientMatch =
-    prompt.match(/(?:bill|invoice|charge|to)\s+([A-Za-z0-9\s&.,'-]+?)(?:\s+for|\s*\$|\s+regarding|\s+with|\s+due|\s*:\s*|\s*,\s*|$)/i) ||
-    prompt.match(/(?:client|customer)\s*[:=]\s*([A-Za-z0-9\s&.,'-]+?)(?:\s*,|\s*for|\s*\$|\s*$)/i);
+  // Remove trailing Net terms / due date phrases from a working copy for cleaner item parsing
+  const cleanedPrompt = prompt
+    .replace(/,?\s*\bnet\s*\d+\b/gi, '')
+    .replace(/,?\s*\bdue\s+(?:on\s+receipt|(?:in\s+)?\d+\s+days)\b/gi, '')
+    .trim();
 
-  if (clientMatch && clientMatch[1]) {
-    const rawClient = clientMatch[1].trim();
-    // Filter out common verbs
-    if (!/^(the|a|an|payment|project|hours|work)$/i.test(rawClient)) {
-      result.clientName = rawClient;
-    }
+  // Detect Client Name
+  // e.g., "Invoice Acme Corp $500...", "Bill Metro Studio for...", "Client: Acme Co"
+  const explicitClientMatch = cleanedPrompt.match(
+    /(?:client|customer|billed\s+to)\s*[:=]\s*([A-Za-z0-9\s&.'-]+?)(?:\s*,|\s+for\b|\s*\$|\s*$)/i
+  );
+  const verbClientMatch = cleanedPrompt.match(
+    /^(?:please\s+)?(?:bill|invoice|charge)\s+([A-Za-z0-9\s&.'-]+?)(?=\s+for\b|\s*\$|\s+\d+\s+(?:hrs?|hours?|units?|days?|items?)\b|\s*,)/i
+  );
+
+  const rawClientCandidate = (explicitClientMatch?.[1] || verbClientMatch?.[1] || '').trim();
+  if (
+    rawClientCandidate &&
+    !/^(the|a|an|me|client|customer|payment|project|hours|work|for|new|draft|create)$/i.test(
+      rawClientCandidate
+    ) &&
+    !/^\d/.test(rawClientCandidate)
+  ) {
+    result.clientName = rawClientCandidate;
   }
 
-  // Parse items and amounts
-  // Patterns like:
-  // "3 hours of consulting at $150/hr"
-  // "Brand Identity design for $4,500"
-  // "10 units of drafting at $120 each"
-  // "$2,500 for Architectural Blueprinting"
-  // Split on clause separators while preserving comma inside numbers like $8,500
-  const sentences = prompt.split(/(?:(?<!\d),(?!\d)|\band\b|\.(?!\d)|\n)/i).map((s) => s.trim()).filter(Boolean);
+  // Strip leading "Bill <Client>" prefix so item descriptions don't include the client name
+  let itemsText = cleanedPrompt;
+  if (result.clientName) {
+    const escapedClient = result.clientName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    itemsText = itemsText
+      .replace(new RegExp(`^(?:please\\s+)?(?:bill|invoice|charge)\\s+${escapedClient}\\s*`, 'i'), '')
+      .replace(new RegExp(`(?:client|customer|billed\\s+to)\\s*[:=]\\s*${escapedClient}\\s*,?\\s*`, 'i'), '')
+      .trim();
+  } else {
+    itemsText = itemsText
+      .replace(/^(?:please\s+)?(?:create\s+an?\s+|draft\s+an?\s+|make\s+an?\s+)?(?:bill|invoice|charge)\s+(?:for\s+)?/i, '')
+      .trim();
+  }
 
-  for (const part of sentences) {
-    // Check for quantity + desc + unit price: e.g., "5 hours of CAD modeling at $120"
-    const qtyRateMatch = part.match(/(\d+)\s+(?:hours?|units?|items?|days?)?\s*(?:of\s+)?([^$]+?)\s+(?:at|@)\s*\$?([\d,]+(?:\.\d{2})?)/i);
+  // Split into item clauses only on commas (not inside numbers), semicolons, newlines,
+  // or " and " ONLY when followed by a number/dollar amount in the next clause
+  const clauses = itemsText
+    .split(/(?:(?<!\d),(?!\d)|;|\n|\band\b(?=[^,;]*?(?:\$|\d+\s*(?:hrs?|hours?|units?|items?|days?|x|@|\bat\b))))/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  for (const part of clauses) {
+    // Pattern 1: Quantity + Description + Unit Rate
+    // e.g. "12 hrs CAD drafting at $150/hr", "5 hours of consulting @ $200", "3x Site Visits at $250"
+    const qtyRateMatch = part.match(
+      /^(\d+)\s*(?:x|hrs?|hours?|units?|items?|days?|weeks?|sessions?)?\s*(?:of\s+)?(.+?)\s+(?:at|@)\s*\$?([\d,]+(?:\.\d{1,2})?)(?:\s*\/\s*[a-z]+|\s+each)?$/i
+    );
     if (qtyRateMatch) {
       const qty = parseInt(qtyRateMatch[1], 10);
-      const desc = qtyRateMatch[2].replace(/^(for|bill|invoice)\s+/i, '').trim();
+      const desc = qtyRateMatch[2].replace(/^(?:for|of|-|:)\s+/i, '').trim();
       const rateDollars = parseFloat(qtyRateMatch[3].replace(/,/g, ''));
-      result.items.push({
-        description: desc.charAt(0).toUpperCase() + desc.slice(1),
-        quantity: isNaN(qty) ? 1 : qty,
-        unitPriceCents: Math.round(rateDollars * 100),
-      });
-      continue;
+      if (desc && !isNaN(rateDollars)) {
+        result.items.push({
+          description: desc.charAt(0).toUpperCase() + desc.slice(1),
+          quantity: isNaN(qty) || qty <= 0 ? 1 : qty,
+          unitPriceCents: Math.round(rateDollars * 100),
+        });
+        continue;
+      }
     }
 
-    // Check for desc + dollar amount: e.g., "Website Redesign for $3,500" or "$3,500 for Website Redesign"
-    const descAmountMatch1 = part.match(/([^$]+?)\s+(?:for|costing|totaling)\s*\$?([\d,]+(?:\.\d{2})?)/i);
-    const descAmountMatch2 = part.match(/\$?([\d,]+(?:\.\d{2})?)\s+(?:for|worth\s+of)\s+([^$]+)/i);
-
-    if (descAmountMatch1 && descAmountMatch1[2]) {
-      const desc = descAmountMatch1[1].replace(/^(bill|invoice|charge|client\s+[\w\s]+?)\s+/i, '').trim();
-      const amount = parseFloat(descAmountMatch1[2].replace(/,/g, ''));
+    // Pattern 2: "$6,500 for Architectural Schematics"
+    const amountFirstMatch = part.match(
+      /^\$?([\d,]+(?:\.\d{1,2})?)\s+(?:for|worth\s+of|on|-|:)\s+(.+)$/i
+    );
+    if (amountFirstMatch) {
+      const amount = parseFloat(amountFirstMatch[1].replace(/,/g, ''));
+      const desc = amountFirstMatch[2].trim();
       if (desc && !isNaN(amount)) {
         result.items.push({
           description: desc.charAt(0).toUpperCase() + desc.slice(1),
@@ -94,9 +127,17 @@ function parseIntentFallback(prompt: string): DraftInvoiceToolResult {
         });
         continue;
       }
-    } else if (descAmountMatch2 && descAmountMatch2[1]) {
-      const amount = parseFloat(descAmountMatch2[1].replace(/,/g, ''));
-      const desc = descAmountMatch2[2].trim();
+    }
+
+    // Pattern 3: "Website Redesign for $3,500" or "Item 1 $1300" or "Item 2: $200"
+    const descFirstMatch = part.match(
+      /^(.+?)\s*(?:for|costing|totaling|at|@|:|-|\$)\s*\$?([\d,]+(?:\.\d{1,2})?)$/i
+    );
+    if (descFirstMatch) {
+      const desc = descFirstMatch[1]
+        .replace(/^(?:for|bill|invoice|charge)\s+/i, '')
+        .trim();
+      const amount = parseFloat(descFirstMatch[2].replace(/,/g, ''));
       if (desc && !isNaN(amount)) {
         result.items.push({
           description: desc.charAt(0).toUpperCase() + desc.slice(1),
@@ -108,19 +149,26 @@ function parseIntentFallback(prompt: string): DraftInvoiceToolResult {
     }
   }
 
-  // If no items were parsed but there's a dollar amount anywhere
+  // Fallback if a single dollar amount was given without matching the above patterns
   if (result.items.length === 0) {
-    const fallbackDollar = prompt.match(/\$?([\d,]+(?:\.\d{2})?)/);
-    const amount = fallbackDollar ? parseFloat(fallbackDollar[1].replace(/,/g, '')) : 1000;
-    result.items.push({
-      description: 'Professional Architectural & Design Services',
-      quantity: 1,
-      unitPriceCents: Math.round(amount * 100),
-    });
-  }
+    const fallbackDollar = itemsText.match(/\$?([\d,]+(?:\.\d{1,2})?)/);
+    const amount = fallbackDollar ? parseFloat(fallbackDollar[1].replace(/,/g, '')) : 0;
+    const leftoverDesc = itemsText
+      .replace(/\$?[\d,]+(?:\.\d{1,2})?/, '')
+      .replace(/^(?:for|of|:|-)\s+/i, '')
+      .replace(/\s+(?:for|of|:|-)$/i, '')
+      .trim();
 
-  if (!result.clientName) {
-    result.clientName = 'Corporate Client';
+    if (amount > 0 || leftoverDesc) {
+      result.items.push({
+        description:
+          leftoverDesc.length > 1
+            ? leftoverDesc.charAt(0).toUpperCase() + leftoverDesc.slice(1)
+            : 'Professional Architectural & Design Services',
+        quantity: 1,
+        unitPriceCents: Math.round((amount || 1000) * 100),
+      });
+    }
   }
 
   return result;
@@ -167,7 +215,7 @@ export async function POST(req: NextRequest) {
                   parameters: {
                     type: 'object',
                     properties: {
-                      clientName: { type: 'string', description: 'Name of the client or company' },
+                      clientName: { type: 'string', description: 'Name of the client or company (empty string if not specified)' },
                       currency: { type: 'string', default: 'USD', description: '3-letter currency code' },
                       dueDateOffsetDays: {
                         type: 'number',
@@ -191,7 +239,7 @@ export async function POST(req: NextRequest) {
                       },
                       notes: { type: 'string', description: 'Additional terms or client notes' },
                     },
-                    required: ['clientName', 'items'],
+                    required: ['items'],
                   },
                 },
               },
@@ -229,4 +277,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to parse invoice intent' }, { status: 500 });
   }
 }
-

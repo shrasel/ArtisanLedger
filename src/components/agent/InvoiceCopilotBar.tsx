@@ -131,7 +131,7 @@ export function InvoiceCopilotBar({ onApplyDraft }: InvoiceCopilotBarProps) {
                 placeholder="e.g. Bill Acme Corp $4,500 for Brand Identity and 15 hrs design consultation at $120/hr, Net 15..."
                 className="w-full bg-obsidian border border-obsidian-border focus:border-status-brass rounded-[2px] p-3 text-xs font-mono text-paper placeholder:text-ink-ghost focus:outline-none resize-none leading-relaxed"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSubmit();
                   }
