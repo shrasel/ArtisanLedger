@@ -895,10 +895,11 @@ export function InvoicePaperSheet({
         {/* TEAR-OFF WIRE TRANSFER REMITTANCE STUB */}
         <div className="relative pt-4 sm:pt-6">
           <div className="relative flex items-center justify-center my-4 sm:my-6">
-            <div className="w-full border-t border-dashed border-ink-ghost/60" />
-            <span className="bg-paper px-2 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center">
+            <div className="flex-1 border-t border-dashed border-ink-ghost/60" />
+            <span className="bg-paper px-3 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center sm:whitespace-nowrap">
               &bull; TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS &bull;
             </span>
+            <div className="flex-1 border-t border-dashed border-ink-ghost/60" />
           </div>
 
           <div className="p-3.5 sm:p-5 border border-bone bg-paper-dark/30 rounded-[1px]">

@@ -853,9 +853,12 @@ export function DispatchInvoiceModal({
                   )}
 
                   {/* Tear-Off Remittance Advice */}
-                  <div className="border-t border-dashed border-[#A1A3A8] my-4" />
-                  <div className="text-center text-[9px] font-mono uppercase tracking-[0.2em] text-[#A1A3A8] mb-3">
-                    --- TEAR-OFF REMITTANCE ADVICE / WIRE TRANSFER INSTRUCTIONS ---
+                  <div className="relative flex items-center justify-center my-5">
+                    <div className="flex-1 border-t border-dashed border-[#A1A3A8]" />
+                    <span className="bg-[#FAF8F5] px-3 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-[#A1A3A8] select-none text-center sm:whitespace-nowrap">
+                      &bull; TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS &bull;
+                    </span>
+                    <div className="flex-1 border-t border-dashed border-[#A1A3A8]" />
                   </div>
                   <div className="p-3.5 border border-[#E6E1D9] bg-[#FAF8F5] rounded-[2px] grid grid-cols-2 gap-3 text-xs">
                     <div>
