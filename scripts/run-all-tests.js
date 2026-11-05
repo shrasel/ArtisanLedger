@@ -60,6 +60,17 @@ try {
     'ALTER TABLE organizations ADD COLUMN default_custom_terms_days INTEGER DEFAULT 14;'
   );
 } catch {}
+try {
+  db.exec(
+    "ALTER TABLE organizations ADD COLUMN email_delivery_provider TEXT DEFAULT 'RESEND';"
+  );
+} catch {}
+try {
+  db.exec('ALTER TABLE organizations ADD COLUMN smtp_user TEXT;');
+} catch {}
+try {
+  db.exec('ALTER TABLE organizations ADD COLUMN smtp_pass TEXT;');
+} catch {}
 
 const orgCols = db.prepare('PRAGMA table_info(organizations)').all().map((c) => c.name);
 assert.ok(
@@ -72,8 +83,11 @@ assert.ok(
     orgCols.includes('letterhead_title') &&
     orgCols.includes('letterhead_tagline') &&
     orgCols.includes('test_recipient_email') &&
-    orgCols.includes('default_custom_terms_days'),
-  'organizations table must have Firm Entity, Letterhead, Test Email, and Custom Terms Days columns'
+    orgCols.includes('default_custom_terms_days') &&
+    orgCols.includes('email_delivery_provider') &&
+    orgCols.includes('smtp_user') &&
+    orgCols.includes('smtp_pass'),
+  'organizations table must have Firm Entity, Letterhead, Test Email, Custom Terms Days, and SMTP columns'
 );
 const utilsSrc = fs.readFileSync(path.join(rootDir, 'src/lib/utils.ts'), 'utf8');
 assert.ok(

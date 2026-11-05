@@ -52,6 +52,13 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
     accountNumber: organization.accountNumber || '',
     swiftBic: organization.swiftBic || '',
     paymentNotes: organization.paymentNotes || '',
+    emailDeliveryProvider:
+      (organization.emailDeliveryProvider as 'RESEND' | 'GMAIL_SMTP') || 'GMAIL_SMTP',
+    smtpUser:
+      organization.smtpUser ||
+      organization.testRecipientEmail ||
+      'shahjahan.rasell@gmail.com',
+    smtpPass: organization.smtpPass || '',
     resendApiKey: organization.resendApiKey || '',
     emailFrom:
       organization.emailFrom || "The Architect's Ledger <onboarding@resend.dev>",
@@ -654,78 +661,188 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
           </div>
         </div>
 
-        {/* SECTION 5: EMAIL DISPATCH & TEST MODE CONFIGURATION */}
-        <div className="lg:col-span-2 bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-obsidian-border text-paper">
-            <Mail className="w-4 h-4 text-status-brass shrink-0" />
-            <div>
-              <h2 className="font-serif text-lg font-bold leading-none">
-                Email Dispatch &amp; Test Mode Configuration
-              </h2>
-              <span className="text-[10px] font-sans text-bone-dark block mt-1">
-                Configure your default test recipient email and Resend API key for live transactional inbox delivery.
-              </span>
+        {/* SECTION 5: EMAIL DISPATCH & DELIVERY ENGINE */}
+        <div className="lg:col-span-2 bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-obsidian-border text-paper">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-status-brass shrink-0" />
+              <div>
+                <h2 className="font-serif text-lg font-bold leading-none">
+                  Email Dispatch &amp; Delivery Engine
+                </h2>
+                <span className="text-[10px] font-sans text-bone-dark block mt-1">
+                  Choose your delivery provider to send invoices with PDF attachments to primary recipients and CC/BCC.
+                </span>
+              </div>
+            </div>
+
+            {/* Provider Toggle: Gmail SMTP vs Resend API */}
+            <div className="inline-flex bg-obsidian border border-obsidian-border rounded-[2px] p-0.5 self-start sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => handleChange('emailDeliveryProvider', 'GMAIL_SMTP')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono uppercase tracking-wider rounded-[1px] transition-colors ${
+                  formData.emailDeliveryProvider === 'GMAIL_SMTP'
+                    ? 'bg-bone text-obsidian font-bold shadow-xs'
+                    : 'text-ink-ghost hover:text-paper'
+                }`}
+              >
+                <span>Gmail SMTP (Full CC/BCC)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChange('emailDeliveryProvider', 'RESEND')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono uppercase tracking-wider rounded-[1px] transition-colors ${
+                  formData.emailDeliveryProvider === 'RESEND'
+                    ? 'bg-bone text-obsidian font-bold shadow-xs'
+                    : 'text-ink-ghost hover:text-paper'
+                }`}
+              >
+                <span>Resend API</span>
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                Default Test Recipient Email
-              </label>
-              <input
-                type="email"
-                placeholder="shahjahan.rasell@gmail.com"
-                value={formData.testRecipientEmail}
-                onChange={(e) => handleChange('testRecipientEmail', e.target.value)}
-                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-              />
-              <span className="text-[10px] font-sans text-ink-ghost block mt-1">
-                Used by the one-click &ldquo;Use Test Email&rdquo; button inside the Dispatch Invoice Studio.
-              </span>
-            </div>
+          {/* GMAIL SMTP FORM */}
+          {formData.emailDeliveryProvider === 'GMAIL_SMTP' && (
+            <div className="space-y-4">
+              <div className="p-3.5 bg-obsidian/40 border border-obsidian-border rounded-[2px] text-xs text-bone-dark leading-relaxed">
+                <span className="font-bold text-paper block mb-1">
+                  ✓ Universal Delivery (Any To, CC, and BCC recipient):
+                </span>
+                Sends emails directly through Google&rsquo;s secure SMTP servers from your personal or Google Workspace email. No custom domain verification required!
+              </div>
 
-            <div>
-              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                Sender From Address
-              </label>
-              <input
-                type="text"
-                placeholder="The Architect's Ledger <onboarding@resend.dev>"
-                value={formData.emailFrom}
-                onChange={(e) => handleChange('emailFrom', e.target.value)}
-                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-              />
-              <span className="text-[10px] font-sans text-ink-ghost block mt-1">
-                Keep <span className="font-mono">onboarding@resend.dev</span> to send test emails without a custom domain.
-              </span>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                    Gmail / Google Account Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="shahjahan.rasell@gmail.com"
+                    value={formData.smtpUser}
+                    onChange={(e) => handleChange('smtpUser', e.target.value)}
+                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                  />
+                  <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                    Your account email used to authenticate and send invoices.
+                  </span>
+                </div>
 
-            <div className="md:col-span-2 lg:col-span-1">
-              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                Resend API Key (Optional)
-              </label>
-              <input
-                type="password"
-                placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                value={formData.resendApiKey}
-                onChange={(e) => handleChange('resendApiKey', e.target.value)}
-                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-              />
-              <span className="text-[10px] font-sans text-ink-ghost block mt-1">
-                Paste a key from{' '}
-                <a
-                  href="https://resend.com/api-keys"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline text-bone hover:text-paper"
-                >
-                  resend.com/api-keys
-                </a>{' '}
-                for live Gmail delivery.
-              </span>
+                <div>
+                  <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                    Google App Password (16 characters) *
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="xxxx xxxx xxxx xxxx"
+                    value={formData.smtpPass}
+                    onChange={(e) => handleChange('smtpPass', e.target.value)}
+                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                  />
+                  <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                    Generate in 30s at{' '}
+                    <a
+                      href="https://myaccount.google.com/apppasswords"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline text-bone hover:text-paper"
+                    >
+                      myaccount.google.com/apppasswords
+                    </a>
+                  </span>
+                </div>
+
+                <div className="md:col-span-2 lg:col-span-1">
+                  <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                    Default Quick-Test Recipient
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="shahjahan.rasell@gmail.com"
+                    value={formData.testRecipientEmail}
+                    onChange={(e) => handleChange('testRecipientEmail', e.target.value)}
+                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                  />
+                  <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                    Populates the &ldquo;Use Test Email&rdquo; button in the Dispatch Studio.
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* RESEND API FORM */}
+          {formData.emailDeliveryProvider === 'RESEND' && (
+            <div className="space-y-4">
+              <div className="p-3.5 bg-obsidian/40 border border-obsidian-border rounded-[2px] text-xs text-bone-dark leading-relaxed">
+                <span className="font-bold text-status-brass block mb-1">
+                  Notice on Resend Free Sandbox:
+                </span>
+                Resend&rsquo;s free sandbox without a custom domain allows sending testing emails only to the account owner&rsquo;s address (<span className="font-mono text-paper">shahjahan.rasell@gmail.com</span>). To deliver to external CC/BCC addresses via Resend, add a domain at <span className="font-mono text-paper">resend.com/domains</span>, or switch to <strong>Gmail SMTP</strong> above.
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                    Default Test Recipient Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="shahjahan.rasell@gmail.com"
+                    value={formData.testRecipientEmail}
+                    onChange={(e) => handleChange('testRecipientEmail', e.target.value)}
+                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                  />
+                  <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                    Used by the one-click &ldquo;Use Test Email&rdquo; button inside the Dispatch Invoice Studio.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                    Sender From Address
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="The Architect's Ledger <onboarding@resend.dev>"
+                    value={formData.emailFrom}
+                    onChange={(e) => handleChange('emailFrom', e.target.value)}
+                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                  />
+                  <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                    Keep <span className="font-mono">onboarding@resend.dev</span> to send test emails without a custom domain.
+                  </span>
+                </div>
+
+                <div className="md:col-span-2 lg:col-span-1">
+                  <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                    Resend API Key
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={formData.resendApiKey}
+                    onChange={(e) => handleChange('resendApiKey', e.target.value)}
+                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                  />
+                  <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                    Paste a key from{' '}
+                    <a
+                      href="https://resend.com/api-keys"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline text-bone hover:text-paper"
+                    >
+                      resend.com/api-keys
+                    </a>.
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

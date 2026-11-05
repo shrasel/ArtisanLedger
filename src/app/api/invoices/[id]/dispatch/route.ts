@@ -163,6 +163,9 @@ export async function POST(
       customMessage: customBody.customMessage,
       resendApiKeyOverride: session.organization.resendApiKey,
       emailFromOverride: session.organization.emailFrom,
+      deliveryProvider: (session.organization.emailDeliveryProvider as 'RESEND' | 'GMAIL_SMTP') || 'RESEND',
+      smtpUser: session.organization.smtpUser,
+      smtpPass: session.organization.smtpPass,
     });
 
     return NextResponse.json({

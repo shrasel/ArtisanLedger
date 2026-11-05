@@ -45,7 +45,10 @@ export const organizations = sqliteTable('organizations', {
   defaultTaxRateBasisPoints: integer('default_tax_rate_basis_points').default(0),
 
   // Email Dispatch & Testing Configuration
+  emailDeliveryProvider: text('email_delivery_provider').default('RESEND'), // 'RESEND' | 'GMAIL_SMTP'
   resendApiKey: text('resend_api_key'),
+  smtpUser: text('smtp_user'),
+  smtpPass: text('smtp_pass'),
   emailFrom: text('email_from').default("The Architect's Ledger <onboarding@resend.dev>"),
   testRecipientEmail: text('test_recipient_email').default('shahjahan.rasell@gmail.com'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),

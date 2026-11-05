@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import type { InvoiceItem, Organization, Client } from '@/db/schema';
 import { formatCentsToCurrency, formatBasisPointsToPercent } from './utils';
 
@@ -31,6 +32,9 @@ export interface SendInvoiceEmailOptions {
   customMessage?: string;
   resendApiKeyOverride?: string | null;
   emailFromOverride?: string | null;
+  deliveryProvider?: 'RESEND' | 'GMAIL_SMTP';
+  smtpUser?: string | null;
+  smtpPass?: string | null;
 }
 
 function escapeHtml(unsafe: string): string {
@@ -489,6 +493,69 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
 </html>
   `;
 
+  const activeDeliveryProvider =
+    options.deliveryProvider ||
+    (options.smtpUser && options.smtpPass ? 'GMAIL_SMTP' : 'RESEND');
+  const activeSmtpUser = options.smtpUser?.trim() || process.env.SMTP_USER;
+  const activeSmtpPass = options.smtpPass?.trim() || process.env.SMTP_PASS;
+
+  // -------------------------------------------------------------
+  // PROVIDER 1: GMAIL SMTP (Supports unlimited To, CC, BCC)
+  // -------------------------------------------------------------
+  if (activeDeliveryProvider === 'GMAIL_SMTP' && activeSmtpUser && activeSmtpPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: activeSmtpUser,
+          pass: activeSmtpPass.replace(/\s+/g, ''), // Strip spaces from 16-character Google App Passwords
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"${extractedName || fromName || "The Architect's Ledger"}" <${activeSmtpUser}>`,
+        to: toList,
+        ...(ccList.length > 0 ? { cc: ccList } : {}),
+        ...(bccList.length > 0 ? { bcc: bccList } : {}),
+        ...(replyToEmail ? { replyTo: replyToEmail } : {}),
+        subject: subjectLine,
+        html: htmlContent,
+        ...(pdfBuffer
+          ? [
+              {
+                filename: `Invoice-${invoiceNumber}.pdf`,
+                content: pdfBuffer,
+              },
+            ]
+          : []),
+      });
+
+      console.log(
+        `[Email Dispatch via Gmail SMTP] Message sent: ${info.messageId} to [${toList.join(', ')}]` +
+          (ccList.length > 0 ? ` cc: [${ccList.join(', ')}]` : '') +
+          (bccList.length > 0 ? ` bcc: [${bccList.join(', ')}]` : '')
+      );
+
+      return {
+        success: true,
+        data: { id: info.messageId },
+        provider: 'GMAIL_SMTP',
+        simulated: false,
+      };
+    } catch (smtpErr: unknown) {
+      const errMsg = smtpErr instanceof Error ? smtpErr.message : String(smtpErr);
+      console.error('Failed to dispatch invoice via Gmail SMTP:', smtpErr);
+      return {
+        success: false,
+        error: `Gmail SMTP Error: ${errMsg}`,
+        simulated: false,
+      };
+    }
+  }
+
+  // -------------------------------------------------------------
+  // PROVIDER 2: RESEND API
+  // -------------------------------------------------------------
   if (resendApiKey) {
     try {
       const resend = new Resend(resendApiKey);

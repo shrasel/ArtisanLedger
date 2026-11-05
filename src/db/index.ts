@@ -163,6 +163,17 @@ try {
       'ALTER TABLE organizations ADD COLUMN default_custom_terms_days INTEGER DEFAULT 14;'
     );
   } catch {}
+  try {
+    sqlite.exec(
+      "ALTER TABLE organizations ADD COLUMN email_delivery_provider TEXT DEFAULT 'RESEND';"
+    );
+  } catch {}
+  try {
+    sqlite.exec('ALTER TABLE organizations ADD COLUMN smtp_user TEXT;');
+  } catch {}
+  try {
+    sqlite.exec('ALTER TABLE organizations ADD COLUMN smtp_pass TEXT;');
+  } catch {}
 } catch (err: any) {
   if (err?.code !== 'SQLITE_BUSY') {
     console.error('Database init warning:', err);

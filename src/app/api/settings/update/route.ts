@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
         swiftBic: body.swiftBic || null,
         paymentNotes: body.paymentNotes || null,
         resendApiKey: body.resendApiKey !== undefined ? body.resendApiKey || null : session.organization.resendApiKey,
+        emailDeliveryProvider: body.emailDeliveryProvider || 'RESEND',
+        smtpUser: body.smtpUser !== undefined ? body.smtpUser || null : session.organization.smtpUser,
+        smtpPass: body.smtpPass !== undefined ? body.smtpPass || null : session.organization.smtpPass,
         emailFrom:
           body.emailFrom !== undefined
             ? body.emailFrom || "The Architect's Ledger <onboarding@resend.dev>"
