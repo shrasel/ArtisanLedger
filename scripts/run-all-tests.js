@@ -35,10 +35,27 @@ for (const table of requiredTables) {
 const clientCols = db.prepare('PRAGMA table_info(clients)').all().map((c) => c.name);
 assert.ok(clientCols.includes('is_default'), 'clients table must have is_default column');
 
+// Ensure idempotent columns exist on organizations
+try { db.exec("ALTER TABLE organizations ADD COLUMN entity_type TEXT DEFAULT 'FIRM';"); } catch {}
+try { db.exec('ALTER TABLE organizations ADD COLUMN principal_name TEXT;'); } catch {}
+try { db.exec('ALTER TABLE organizations ADD COLUMN letterhead_title TEXT;'); } catch {}
+try {
+  db.exec(
+    "ALTER TABLE organizations ADD COLUMN letterhead_tagline TEXT DEFAULT 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER';"
+  );
+} catch {}
+
 const orgCols = db.prepare('PRAGMA table_info(organizations)').all().map((c) => c.name);
 assert.ok(
   orgCols.includes('default_client_id'),
   'organizations table must have default_client_id column'
+);
+assert.ok(
+  orgCols.includes('entity_type') &&
+    orgCols.includes('principal_name') &&
+    orgCols.includes('letterhead_title') &&
+    orgCols.includes('letterhead_tagline'),
+  'organizations table must have Firm Entity & Letterhead columns (entity_type, principal_name, letterhead_title, letterhead_tagline)'
 );
 console.log('  ✓ Passed: WAL mode active, FKs enforced, and all schema tables/columns verified.\n');
 

@@ -453,14 +453,19 @@ export function InvoicePaperSheet({
           </span>
         </div>
 
-        {/* Paper Sheet Header */}
+        {/* Paper Sheet Header (Document Letterhead) */}
         <div className="relative border-b-2 border-ink-primary pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-1">
-              FINANCIAL INSTRUMENT &bull; CERTIFIED LEDGER
-            </span>
+            {(organization.letterheadTagline ?? 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER') && (
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-1">
+                {organization.letterheadTagline ?? 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER'}
+              </span>
+            )}
             <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-ink-primary">
-              {organization.companyName || "The Architect's Ledger"}
+              {organization.letterheadTitle ||
+                organization.companyName ||
+                organization.principalName ||
+                "The Architect's Ledger"}
             </h1>
             <p className="text-xs font-sans text-ink-secondary mt-1 tracking-wide">
               Document No. <span className="font-mono font-semibold">{invoiceNumber}</span>
@@ -477,16 +482,42 @@ export function InvoicePaperSheet({
 
         {/* Structured Grid Metadata: Issuer & Debtor */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 mb-8 border-b border-bone">
-          {/* Issuer / Seller Info */}
+          {/* Issuer / Seller Info (Firm Entity) */}
           <div>
             <h2 className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-ink-secondary mb-3 flex items-center gap-1.5">
               <Building2 className="w-3 h-3 text-ink-ghost" />
-              <span>Issuer / Creditor</span>
+              <span>
+                Issuer / Creditor{' '}
+                {organization.entityType === 'INDIVIDUAL' ? '(Individual)' : '(Firm Entity)'}
+              </span>
             </h2>
             <div className="space-y-1 text-sm font-sans text-ink-secondary">
-              <div className="font-serif font-bold text-base text-ink-primary">
-                {organization.companyName}
-              </div>
+              {organization.entityType === 'INDIVIDUAL' ? (
+                <>
+                  <div className="font-serif font-bold text-base text-ink-primary">
+                    {organization.principalName || organization.companyName}
+                  </div>
+                  {organization.companyName &&
+                    organization.principalName &&
+                    organization.companyName !== organization.principalName && (
+                      <div className="text-xs font-medium text-ink-primary">
+                        {organization.companyName}
+                      </div>
+                    )}
+                </>
+              ) : (
+                <>
+                  <div className="font-serif font-bold text-base text-ink-primary">
+                    {organization.companyName || organization.principalName}
+                  </div>
+                  {organization.principalName &&
+                    organization.principalName !== organization.companyName && (
+                      <div className="text-xs text-ink-secondary">
+                        Principal: {organization.principalName}
+                      </div>
+                    )}
+                </>
+              )}
               {organization.addressLine && <div>{organization.addressLine}</div>}
               <div>
                 {[organization.city, organization.state, organization.postalCode].filter(Boolean).join(', ')}
@@ -499,6 +530,9 @@ export function InvoicePaperSheet({
               )}
               {organization.email && (
                 <div className="text-xs text-ink-secondary">{organization.email}</div>
+              )}
+              {organization.phone && (
+                <div className="text-xs font-mono text-ink-secondary">{organization.phone}</div>
               )}
             </div>
           </div>

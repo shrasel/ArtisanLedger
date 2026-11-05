@@ -16,7 +16,14 @@ export async function POST(req: NextRequest) {
     await db
       .update(organizations)
       .set({
-        companyName: body.companyName || session.organization.companyName,
+        entityType: body.entityType === 'INDIVIDUAL' ? 'INDIVIDUAL' : 'FIRM',
+        companyName:
+          body.companyName ||
+          body.principalName ||
+          session.organization.companyName,
+        principalName: body.principalName || null,
+        letterheadTitle: body.letterheadTitle ?? null,
+        letterheadTagline: body.letterheadTagline ?? null,
         taxId: body.taxId || null,
         phone: body.phone || null,
         email: body.email || null,

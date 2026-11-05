@@ -130,6 +130,20 @@ try {
   try {
     sqlite.exec('ALTER TABLE organizations ADD COLUMN default_client_id TEXT;');
   } catch {}
+  try {
+    sqlite.exec("ALTER TABLE organizations ADD COLUMN entity_type TEXT DEFAULT 'FIRM';");
+  } catch {}
+  try {
+    sqlite.exec('ALTER TABLE organizations ADD COLUMN principal_name TEXT;');
+  } catch {}
+  try {
+    sqlite.exec('ALTER TABLE organizations ADD COLUMN letterhead_title TEXT;');
+  } catch {}
+  try {
+    sqlite.exec(
+      "ALTER TABLE organizations ADD COLUMN letterhead_tagline TEXT DEFAULT 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER';"
+    );
+  } catch {}
 } catch (err: any) {
   if (err?.code !== 'SQLITE_BUSY') {
     console.error('Database init warning:', err);

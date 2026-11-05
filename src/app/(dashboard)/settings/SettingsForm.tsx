@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Landmark, Settings2, Save, Check, Loader2 } from 'lucide-react';
+import { Building2, Landmark, Settings2, Save, Check, Loader2, FileText, User } from 'lucide-react';
 import type { Organization, Client } from '@/db/schema';
 import { parsePercentToBasisPoints, formatBasisPointsToPercent } from '@/lib/utils';
 
@@ -18,7 +18,12 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
+    entityType: (organization.entityType as 'INDIVIDUAL' | 'FIRM') || 'FIRM',
     companyName: organization.companyName || '',
+    principalName: organization.principalName || '',
+    letterheadTitle: organization.letterheadTitle || organization.companyName || '',
+    letterheadTagline:
+      organization.letterheadTagline ?? 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER',
     taxId: organization.taxId || '',
     email: organization.email || '',
     phone: organization.phone || '',
@@ -94,21 +99,77 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
         </div>
       )}
 
-      {/* SECTION 1: FIRM ENTITY */}
-      <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-6 space-y-4">
-        <div className="flex items-center gap-2 pb-3 border-b border-obsidian-border text-paper">
-          <Building2 className="w-4 h-4 text-status-brass" />
-          <h2 className="font-serif text-lg font-bold">Firm Entity & Letterhead</h2>
+      {/* SECTION 1: FIRM ENTITY & LEGAL IDENTITY */}
+      <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-obsidian-border text-paper">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-status-brass" />
+            <div>
+              <h2 className="font-serif text-lg font-bold leading-none">
+                Firm Entity & Legal Identity
+              </h2>
+              <span className="text-[10px] font-sans text-bone-dark block mt-1">
+                Defines the legal Issuer / Creditor record on invoices (Individual Practitioner or Registered Firm).
+              </span>
+            </div>
+          </div>
+
+          {/* Entity Classification Selector */}
+          <div className="inline-flex bg-obsidian border border-obsidian-border rounded-[2px] p-0.5 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => handleChange('entityType', 'INDIVIDUAL')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono uppercase tracking-wider rounded-[1px] transition-colors ${
+                formData.entityType === 'INDIVIDUAL'
+                  ? 'bg-bone text-obsidian font-bold shadow-xs'
+                  : 'text-ink-ghost hover:text-paper'
+              }`}
+            >
+              <User className="w-3 h-3" />
+              <span>Individual</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleChange('entityType', 'FIRM')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono uppercase tracking-wider rounded-[1px] transition-colors ${
+                formData.entityType === 'FIRM'
+                  ? 'bg-bone text-obsidian font-bold shadow-xs'
+                  : 'text-ink-ghost hover:text-paper'
+              }`}
+            >
+              <Building2 className="w-3 h-3" />
+              <span>Firm / LLC</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
+          <div>
             <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-              Company / Practice Name
+              {formData.entityType === 'INDIVIDUAL'
+                ? 'Practitioner Full Legal Name *'
+                : 'Principal / Authorized Representative'}
             </label>
             <input
               type="text"
-              required
+              required={formData.entityType === 'INDIVIDUAL'}
+              placeholder="e.g. Md Shahjahan Rasel"
+              value={formData.principalName}
+              onChange={(e) => handleChange('principalName', e.target.value)}
+              className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-sm font-serif font-bold text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+              {formData.entityType === 'FIRM'
+                ? 'Registered Firm / Company Name *'
+                : 'Studio / Trade Name (DBA — Optional)'}
+            </label>
+            <input
+              type="text"
+              required={formData.entityType === 'FIRM'}
+              placeholder="e.g. Atelier Vance Architecture LLC"
               value={formData.companyName}
               onChange={(e) => handleChange('companyName', e.target.value)}
               className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-sm font-serif font-bold text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
@@ -117,7 +178,7 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
 
           <div>
             <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-              Tax ID / EIN
+              {formData.entityType === 'INDIVIDUAL' ? 'Tax ID / SSN / EIN' : 'Corporate Tax ID / EIN'}
             </label>
             <input
               type="text"
@@ -127,16 +188,31 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
             />
           </div>
 
-          <div>
-            <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-              Practice Email
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                Practice Email
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                Telephone
+              </label>
+              <input
+                type="text"
+                placeholder="+1 (212) 555-0188"
+                value={formData.phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+              />
+            </div>
           </div>
 
           <div className="md:col-span-2">
@@ -185,6 +261,79 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
                 onChange={(e) => handleChange('postalCode', e.target.value)}
                 className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
               />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 2: DOCUMENT LETTERHEAD & MASTHEAD */}
+      <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-6 space-y-5">
+        <div className="flex items-center gap-2 pb-3 border-b border-obsidian-border text-paper">
+          <FileText className="w-4 h-4 text-status-brass" />
+          <div>
+            <h2 className="font-serif text-lg font-bold leading-none">
+              Document Letterhead & Masthead
+            </h2>
+            <span className="text-[10px] font-sans text-bone-dark block mt-1">
+              Configures the top masthead title and tagline printed across the Living Invoice Sheet and US Letter PDF.
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+              Letterhead Title (Masthead Heading)
+            </label>
+            <input
+              type="text"
+              placeholder={
+                formData.companyName ||
+                formData.principalName ||
+                "The Architect's Ledger"
+              }
+              value={formData.letterheadTitle}
+              onChange={(e) => handleChange('letterheadTitle', e.target.value)}
+              className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-sm font-serif font-bold text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+            />
+            <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+              Displayed in large serif typography at the top of the document.
+            </span>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+              Letterhead Tagline / Subtitle
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER"
+              value={formData.letterheadTagline}
+              onChange={(e) => handleChange('letterheadTagline', e.target.value)}
+              className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+            />
+            <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+              Displayed in tracked uppercase small-caps alongside the letterhead title.
+            </span>
+          </div>
+        </div>
+
+        {/* Live Cotton Paper Masthead Preview */}
+        <div className="p-4 bg-paper text-ink-primary border border-bone rounded-[2px] shadow-xs">
+          <div className="text-[9px] font-mono uppercase tracking-widest text-ink-ghost mb-2">
+            LIVE LETTERHEAD PREVIEW (ARCHIVAL PAPER)
+          </div>
+          <div className="border-b-2 border-ink-primary pb-3">
+            {formData.letterheadTagline && (
+              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-0.5">
+                {formData.letterheadTagline}
+              </span>
+            )}
+            <div className="font-serif text-2xl font-bold tracking-tight text-ink-primary">
+              {formData.letterheadTitle ||
+                formData.companyName ||
+                formData.principalName ||
+                "The Architect's Ledger"}
             </div>
           </div>
         </div>

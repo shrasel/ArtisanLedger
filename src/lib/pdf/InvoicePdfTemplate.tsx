@@ -331,11 +331,20 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
   return (
     <Document title={`Invoice ${invoice.invoiceNumber}`} author={organization.companyName}>
       <Page size="LETTER" style={styles.page}>
-        {/* Header */}
+        {/* Header (Document Letterhead) */}
         <View style={styles.header}>
           <View style={styles.brandContainer}>
-            <Text style={styles.brandTitle}>{organization.companyName || "The Architect's Ledger"}</Text>
-            <Text style={styles.brandSubtitle}>Archival Financial Document / Certified Ledger</Text>
+            <Text style={styles.brandTitle}>
+              {organization.letterheadTitle ||
+                organization.companyName ||
+                organization.principalName ||
+                "The Architect's Ledger"}
+            </Text>
+            {(organization.letterheadTagline ?? 'Archival Financial Document / Certified Ledger') ? (
+              <Text style={styles.brandSubtitle}>
+                {organization.letterheadTagline ?? 'Archival Financial Document / Certified Ledger'}
+              </Text>
+            ) : null}
           </View>
           <View style={[styles.statusBadge, getStatusStyle(invoice.status)]}>
             <Text>{invoice.status || 'DRAFT'}</Text>
@@ -345,8 +354,34 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
         {/* Metadata Grid */}
         <View style={styles.metaGrid}>
           <View style={styles.metaCol}>
-            <Text style={styles.metaHeading}>Issuer / Creditor</Text>
-            <Text style={styles.companyName}>{organization.companyName}</Text>
+            <Text style={styles.metaHeading}>
+              Issuer / Creditor{' '}
+              {organization.entityType === 'INDIVIDUAL' ? '(Individual)' : '(Firm Entity)'}
+            </Text>
+            {organization.entityType === 'INDIVIDUAL' ? (
+              <>
+                <Text style={styles.companyName}>
+                  {organization.principalName || organization.companyName}
+                </Text>
+                {organization.companyName &&
+                  organization.principalName &&
+                  organization.companyName !== organization.principalName && (
+                    <Text style={styles.addressLine}>{organization.companyName}</Text>
+                  )}
+              </>
+            ) : (
+              <>
+                <Text style={styles.companyName}>
+                  {organization.companyName || organization.principalName}
+                </Text>
+                {organization.principalName &&
+                  organization.principalName !== organization.companyName && (
+                    <Text style={styles.addressLine}>
+                      Principal: {organization.principalName}
+                    </Text>
+                  )}
+              </>
+            )}
             {organization.addressLine && <Text style={styles.addressLine}>{organization.addressLine}</Text>}
             <Text style={styles.addressLine}>
               {[organization.city, organization.state, organization.postalCode].filter(Boolean).join(', ')}
@@ -355,6 +390,7 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
               <Text style={styles.addressLine}>Tax ID / EIN: {organization.taxId}</Text>
             )}
             {organization.email && <Text style={styles.addressLine}>{organization.email}</Text>}
+            {organization.phone && <Text style={styles.addressLine}>{organization.phone}</Text>}
           </View>
 
           <View style={styles.metaCol}>

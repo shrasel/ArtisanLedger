@@ -12,7 +12,11 @@ export const users = sqliteTable('users', {
 export const organizations = sqliteTable('organizations', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  entityType: text('entity_type').default('FIRM'), // 'INDIVIDUAL' | 'FIRM'
   companyName: text('company_name').notNull(),
+  principalName: text('principal_name'),
+  letterheadTitle: text('letterhead_title'),
+  letterheadTagline: text('letterhead_tagline').default('ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER'),
   logoUrl: text('logo_url'),
   taxId: text('tax_id'),
   email: text('email'),
