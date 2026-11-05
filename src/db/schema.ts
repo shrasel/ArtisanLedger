@@ -34,6 +34,7 @@ export const organizations = sqliteTable('organizations', {
   accountNumber: text('account_number'),
   swiftBic: text('swift_bic'),
   paymentNotes: text('payment_notes'),
+  remittanceStubLabel: text('remittance_stub_label').default('TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'),
 
   // Invoice Defaults
   defaultCurrency: text('default_currency').default('USD'),

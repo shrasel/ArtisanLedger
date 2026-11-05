@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
         accountNumber: body.accountNumber || null,
         swiftBic: body.swiftBic || null,
         paymentNotes: body.paymentNotes || null,
+        remittanceStubLabel: body.remittanceStubLabel ?? null,
         resendApiKey: body.resendApiKey !== undefined ? body.resendApiKey || null : session.organization.resendApiKey,
         emailDeliveryProvider: body.emailDeliveryProvider || 'RESEND',
         smtpUser: body.smtpUser !== undefined ? body.smtpUser || null : session.organization.smtpUser,

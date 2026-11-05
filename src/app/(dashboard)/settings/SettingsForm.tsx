@@ -52,6 +52,9 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
     accountNumber: organization.accountNumber || '',
     swiftBic: organization.swiftBic || '',
     paymentNotes: organization.paymentNotes || '',
+    remittanceStubLabel:
+      organization.remittanceStubLabel ??
+      'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS',
     emailDeliveryProvider:
       (organization.emailDeliveryProvider as 'RESEND' | 'GMAIL_SMTP') || 'GMAIL_SMTP',
     smtpUser:
@@ -656,6 +659,22 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
                   onChange={(e) => handleChange('paymentNotes', e.target.value)}
                   className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                  Perforation Stub Header Label (Tear-Off Banner Text)
+                </label>
+                <input
+                  type="text"
+                  placeholder="TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS"
+                  value={formData.remittanceStubLabel}
+                  onChange={(e) => handleChange('remittanceStubLabel', e.target.value)}
+                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                />
+                <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                  Customizes the divider banner text printed across the bottom tear-off section of the invoice and PDF.
+                </span>
               </div>
             </div>
           </div>

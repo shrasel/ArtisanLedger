@@ -959,7 +959,7 @@ export function InvoicePaperSheet({
           <div className="relative flex items-center justify-center my-4 sm:my-6">
             <div className="flex-1 border-t border-dashed border-ink-ghost/60" />
             <span className="bg-paper px-3 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center sm:whitespace-nowrap">
-              &bull; TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS &bull;
+              &bull; {organization.remittanceStubLabel || 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'} &bull;
             </span>
             <div className="flex-1 border-t border-dashed border-ink-ghost/60" />
           </div>

@@ -174,6 +174,11 @@ try {
   try {
     sqlite.exec('ALTER TABLE organizations ADD COLUMN smtp_pass TEXT;');
   } catch {}
+  try {
+    sqlite.exec(
+      "ALTER TABLE organizations ADD COLUMN remittance_stub_label TEXT DEFAULT 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS';"
+    );
+  } catch {}
 } catch (err: any) {
   if (err?.code !== 'SQLITE_BUSY') {
     console.error('Database init warning:', err);

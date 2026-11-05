@@ -476,7 +476,9 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
 
         {/* Tear-off Bank Wire Stub */}
         <View style={styles.stubDivider} />
-        <Text style={styles.stubTitle}>--- TEAR-OFF REMITTANCE ADVICE / WIRE TRANSFER INSTRUCTIONS ---</Text>
+        <Text style={styles.stubTitle}>
+          --- {organization.remittanceStubLabel || 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'} ---
+        </Text>
 
         <View style={styles.remittanceBox}>
           <View style={styles.wireRow}>

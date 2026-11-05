@@ -269,7 +269,9 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   const wireRemittanceHtml = organization
     ? `
       <div style="margin: 24px 0 12px; padding: 14px; border: 1px solid #E6E1D9; background-color: #F3EFEA; border-radius: 2px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #5C5E62; font-weight: 700; margin-bottom: 8px;">Wire Transfer / Remittance Instructions</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #5C5E62; font-weight: 700; margin-bottom: 8px;">${escapeHtml(
+          organization.remittanceStubLabel || 'Wire Transfer / Remittance Instructions'
+        )}</div>
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 4px 0; width: 50%;">

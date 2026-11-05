@@ -71,6 +71,11 @@ try {
 try {
   db.exec('ALTER TABLE organizations ADD COLUMN smtp_pass TEXT;');
 } catch {}
+try {
+  db.exec(
+    "ALTER TABLE organizations ADD COLUMN remittance_stub_label TEXT DEFAULT 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS';"
+  );
+} catch {}
 
 const orgCols = db.prepare('PRAGMA table_info(organizations)').all().map((c) => c.name);
 assert.ok(
@@ -86,8 +91,9 @@ assert.ok(
     orgCols.includes('default_custom_terms_days') &&
     orgCols.includes('email_delivery_provider') &&
     orgCols.includes('smtp_user') &&
-    orgCols.includes('smtp_pass'),
-  'organizations table must have Firm Entity, Letterhead, Test Email, Custom Terms Days, and SMTP columns'
+    orgCols.includes('smtp_pass') &&
+    orgCols.includes('remittance_stub_label'),
+  'organizations table must have Firm Entity, Letterhead, Test Email, Custom Terms Days, SMTP, and Remittance Stub columns'
 );
 const utilsSrc = fs.readFileSync(path.join(rootDir, 'src/lib/utils.ts'), 'utf8');
 assert.ok(
