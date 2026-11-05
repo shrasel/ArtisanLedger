@@ -52,3 +52,4 @@ After modifying PDF styles or dispatch logic, verify PDF geometry and PIN flows:
 ```bash
 node scripts/run-all-tests.js
 ```
+

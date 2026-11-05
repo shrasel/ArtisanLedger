@@ -66,3 +66,4 @@ To prevent invisible light-on-light or dark-on-dark text across themes:
   - `status-hunter` (`#2B4C3F`): Verified / Paid / Default Client badge.
   - `status-brass` (`#D4AF37`): Draft / Pending / Accents.
   - `status-vermilion` (`#C84630`): Wax Seal / Overdue / Void / Errors.
+

@@ -42,3 +42,4 @@ Whenever asked to add, enhance, or remove any feature:
    - Run `node scripts/run-all-tests.js` to validate all core invariants and regression suites.
    - If adding a new feature, add a corresponding test assertion to the verification suite.
    - Run `npm run build` when modifying routes, types, or global CSS.
+

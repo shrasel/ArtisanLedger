@@ -42,3 +42,4 @@ Whenever you add or modify a feature:
    npm run build
    ```
 3. If the production server daemon is running on port `3005`, restart it after `npm run build` so the live server reflects the compiled changes.
+
