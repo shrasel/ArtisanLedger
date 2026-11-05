@@ -36,7 +36,7 @@ When working on a specific subsystem, you can also run individual test scripts i
 
 ## 3. Adding Tests for New Features
 Whenever you add or modify a feature:
-1. Add an assertion block to [`scripts/run-all-tests.js`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/scripts/run-all-tests.js) or create a dedicated `scripts/test-<feature>.js` script.
+1. Add an assertion block to [`scripts/run-all-tests.js`](../../../scripts/run-all-tests.js) or create a dedicated `scripts/test-<feature>.js` script.
 2. If you modified TypeScript types, Next.js routes, or `globals.css`, run a production build check:
    ```bash
    npm run build

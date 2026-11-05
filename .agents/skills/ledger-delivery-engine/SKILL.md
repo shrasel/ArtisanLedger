@@ -10,11 +10,11 @@ description: >-
 # Ledger Delivery Engine & PDF Streaming Skill
 
 ## 1. Key Files
-- [`src/lib/pdf/InvoicePdfTemplate.tsx`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/lib/pdf/InvoicePdfTemplate.tsx): `@react-pdf/renderer` document layout.
-- [`src/app/api/invoices/[id]/pdf/route.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/app/api/invoices/%5Bid%5D/pdf/route.ts): Server-side PDF stream endpoint with dual authorization (session owner OR verified recipient token).
-- [`src/app/api/invoices/[id]/dispatch/route.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/app/api/invoices/%5Bid%5D/dispatch/route.ts): Token & 6-digit PIN generation, bcrypt hashing, DB update (`status = 'SENT'`), and email dispatch.
-- [`src/app/view/[token]/page.tsx`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/app/view/%5Btoken%5D/page.tsx) & [`actions.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/app/view/%5Btoken%5D/actions.ts): Recipient portal and PIN unlock Server Action.
-- [`src/lib/email.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/lib/email.ts): Resend transactional email dispatcher with terminal simulation fallback.
+- [`src/lib/pdf/InvoicePdfTemplate.tsx`](../../../src/lib/pdf/InvoicePdfTemplate.tsx): `@react-pdf/renderer` document layout.
+- [`src/app/api/invoices/[id]/pdf/route.ts`](../../../src/app/api/invoices/[id]/pdf/route.ts): Server-side PDF stream endpoint with dual authorization (session owner OR verified recipient token).
+- [`src/app/api/invoices/[id]/dispatch/route.ts`](../../../src/app/api/invoices/[id]/dispatch/route.ts): Token & 6-digit PIN generation, bcrypt hashing, DB update (`status = 'SENT'`), and email dispatch.
+- [`src/app/view/[token]/page.tsx`](../../../src/app/view/[token]/page.tsx) & [`actions.ts`](../../../src/app/view/[token]/actions.ts): Recipient portal and PIN unlock Server Action.
+- [`src/lib/email.ts`](../../../src/lib/email.ts): Resend transactional email dispatcher with terminal simulation fallback.
 
 ---
 

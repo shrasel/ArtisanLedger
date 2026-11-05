@@ -6,10 +6,10 @@ You are working on **The Architect's Ledger**, a minimalist, tactile, archival l
 To minimize token consumption and prevent context bloat:
 - **DO NOT** read the entire codebase or unrelated files on every request.
 - **ACTIVATE ONLY THE RELEVANT SKILL** from `.agents/skills/` for the specific domain you are modifying:
-  - Database / Schema / Cents Math $\rightarrow$ Read [`.agents/skills/ledger-schema/SKILL.md`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/.agents/skills/ledger-schema/SKILL.md)
-  - UI / Styling / Dark & Light Theme $\rightarrow$ Read [`.agents/skills/ledger-design-system/SKILL.md`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/.agents/skills/ledger-design-system/SKILL.md)
-  - PDF Generation / PIN Gate / Email Dispatch $\rightarrow$ Read [`.agents/skills/ledger-delivery-engine/SKILL.md`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/.agents/skills/ledger-delivery-engine/SKILL.md)
-  - Testing / Verification / Regressions $\rightarrow$ Read [`.agents/skills/ledger-test-suite/SKILL.md`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/.agents/skills/ledger-test-suite/SKILL.md)
+  - Database / Schema / Cents Math $\rightarrow$ Read [`.agents/skills/ledger-schema/SKILL.md`](.agents/skills/ledger-schema/SKILL.md)
+  - UI / Styling / Dark & Light Theme $\rightarrow$ Read [`.agents/skills/ledger-design-system/SKILL.md`](.agents/skills/ledger-design-system/SKILL.md)
+  - PDF Generation / PIN Gate / Email Dispatch $\rightarrow$ Read [`.agents/skills/ledger-delivery-engine/SKILL.md`](.agents/skills/ledger-delivery-engine/SKILL.md)
+  - Testing / Verification / Regressions $\rightarrow$ Read [`.agents/skills/ledger-test-suite/SKILL.md`](.agents/skills/ledger-test-suite/SKILL.md)
 
 ---
 

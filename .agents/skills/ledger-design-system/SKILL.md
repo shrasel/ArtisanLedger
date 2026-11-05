@@ -10,10 +10,10 @@ description: >-
 # The Architect's Ledger — Editorial Design System Skill
 
 ## 1. Key Files
-- [`tailwind.config.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/tailwind.config.ts): Custom theme tokens (`obsidian`, `paper`, `bone`, `ink`, `status`), fonts, and editorial shadows.
-- [`src/app/globals.css`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/app/globals.css): Light (`#F0EBE1`) and Dark (`#111215`) canvas CSS variables and contrast rules.
-- [`src/components/theme/ThemeToggle.tsx`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/components/theme/ThemeToggle.tsx): Light / Dark / System switcher syncing `.dark` class and `<meta name="color-scheme">`.
-- [`src/components/invoice/InvoicePaperSheet.tsx`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/components/invoice/InvoicePaperSheet.tsx): The inline-editable "Living Document" sheet.
+- [`tailwind.config.ts`](../../../tailwind.config.ts): Custom theme tokens (`obsidian`, `paper`, `bone`, `ink`, `status`), fonts, and editorial shadows.
+- [`src/app/globals.css`](../../../src/app/globals.css): Light (`#F0EBE1`) and Dark (`#111215`) canvas CSS variables and contrast rules.
+- [`src/components/theme/ThemeToggle.tsx`](../../../src/components/theme/ThemeToggle.tsx): Light / Dark / System switcher syncing `.dark` class and `<meta name="color-scheme">`.
+- [`src/components/invoice/InvoicePaperSheet.tsx`](../../../src/components/invoice/InvoicePaperSheet.tsx): The inline-editable "Living Document" sheet.
 
 ---
 

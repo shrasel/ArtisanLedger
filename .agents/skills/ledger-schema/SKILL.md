@@ -10,9 +10,9 @@ description: >-
 # Ledger Schema & Financial Arithmetic Skill
 
 ## 1. Key Files (Read Only What You Need)
-- [`src/db/schema.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/db/schema.ts): Drizzle table definitions (`users`, `organizations`, `clients`, `invoices`, `invoiceItems`).
-- [`src/db/index.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/db/index.ts): `better-sqlite3` connection, WAL pragma setup, and idempotent startup schema migrations.
-- [`src/lib/utils.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/lib/utils.ts): Currency/cent conversion helpers (`dollarsToCents`, `formatCentsToCurrency`, `calculateInvoiceTotals`).
+- [`src/db/schema.ts`](../../../src/db/schema.ts): Drizzle table definitions (`users`, `organizations`, `clients`, `invoices`, `invoiceItems`).
+- [`src/db/index.ts`](../../../src/db/index.ts): `better-sqlite3` connection, WAL pragma setup, and idempotent startup schema migrations.
+- [`src/lib/utils.ts`](../../../src/lib/utils.ts): Currency/cent conversion helpers (`dollarsToCents`, `formatCentsToCurrency`, `calculateInvoiceTotals`).
 
 ---
 
@@ -31,8 +31,8 @@ description: >-
 ## 3. Safe Schema Evolution Protocol
 
 When adding a new column or table:
-1. **Update Drizzle Schema**: Add the field in [`src/db/schema.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/db/schema.ts).
-2. **Add Idempotent Startup Migration**: In [`src/db/index.ts`](file:///Users/shahjahanrasel/Development/myApps/ArtLedger/src/db/index.ts), inspect `PRAGMA table_info(table_name)` and run `ALTER TABLE ... ADD COLUMN` only if the column is missing.
+1. **Update Drizzle Schema**: Add the field in [`src/db/schema.ts`](../../../src/db/schema.ts).
+2. **Add Idempotent Startup Migration**: In [`src/db/index.ts`](../../../src/db/index.ts), inspect `PRAGMA table_info(table_name)` and run `ALTER TABLE ... ADD COLUMN` only if the column is missing.
    ```ts
    const cols = sqlite.prepare("PRAGMA table_info(clients)").all() as Array<{ name: string }>;
    if (!cols.some((c) => c.name === 'new_col')) {
