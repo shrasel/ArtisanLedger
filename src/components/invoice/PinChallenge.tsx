@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
-import { Lock, KeyRound, ShieldAlert, Check, ArrowRight, Loader2 } from 'lucide-react';
+import React, { useState, useTransition, useRef, useEffect } from 'react';
+import { Lock, ShieldAlert, ArrowRight, Loader2, ClipboardPaste } from 'lucide-react';
 import { verifyPinAndUnlock } from '@/app/view/[token]/actions';
 
 interface PinChallengeProps {
@@ -20,22 +20,89 @@ export function PinChallenge({
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus the PIN input on mount so keyboard typing and Cmd+V / Ctrl+V work immediately
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  // Also listen for global paste / keyboard events when the user presses keys or pastes anywhere on the page
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      // Avoid double-handling if the hidden/overlay input itself is the target
+      if (document.activeElement === inputRef.current) return;
+      const pasted = e.clipboardData?.getData('text') || '';
+      const digitsOnly = pasted.replace(/\D/g, '').slice(0, 6);
+      if (digitsOnly) {
+        e.preventDefault();
+        setPin(digitsOnly);
+        setError(null);
+      }
+    };
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement === inputRef.current) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        setPin((prev) => (prev.length < 6 ? prev + e.key : prev));
+        setError(null);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        setPin((prev) => prev.slice(0, -1));
+        setError(null);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setPin('');
+        setError(null);
+      }
+    };
+
+    window.addEventListener('paste', handleGlobalPaste);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('paste', handleGlobalPaste);
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, []);
 
   const handleDigit = (digit: string) => {
     if (pin.length < 6) {
       setPin((prev) => prev + digit);
       setError(null);
     }
+    inputRef.current?.focus();
   };
 
   const handleBackspace = () => {
     setPin((prev) => prev.slice(0, -1));
     setError(null);
+    inputRef.current?.focus();
   };
 
   const handleClear = () => {
     setPin('');
     setError(null);
+    inputRef.current?.focus();
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const digitsOnly = text.replace(/\D/g, '').slice(0, 6);
+      if (digitsOnly) {
+        setPin(digitsOnly);
+        setError(null);
+        inputRef.current?.focus();
+      } else {
+        setError('Clipboard does not contain a numeric PIN.');
+      }
+    } catch {
+      inputRef.current?.focus();
+      setError('Press Cmd+V (Mac) or Ctrl+V (Windows) to paste your PIN.');
+    }
   };
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -53,6 +120,7 @@ export function PinChallenge({
       } else {
         setError(res.error || 'Invalid verification passcode.');
         setPin('');
+        inputRef.current?.focus();
       }
     });
   };
@@ -87,29 +155,71 @@ export function PinChallenge({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* PIN Input Display */}
+          {/* PIN Input Display (Supports Keyboard Typing, Cmd+V/Ctrl+V Paste, and Number Pad) */}
           <div>
-            <div className="flex justify-center gap-2 mb-2">
+            <div
+              onClick={() => inputRef.current?.focus()}
+              className="relative flex justify-center gap-2 mb-2 cursor-text"
+            >
+              {/* Real interactive input for native copy/paste, mobile OTP autofill, and keyboard entry */}
+              <input
+                ref={inputRef}
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                aria-label="6-digit verification PIN"
+                value={pin}
+                onChange={(e) => {
+                  const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setPin(digitsOnly);
+                  setError(null);
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData.getData('text') || '';
+                  const digitsOnly = pasted.replace(/\D/g, '').slice(0, 6);
+                  if (digitsOnly) {
+                    setPin(digitsOnly);
+                    setError(null);
+                  }
+                }}
+                className="sr-only"
+              />
+
               {[0, 1, 2, 3, 4, 5].map((idx) => {
                 const char = pin[idx];
+                const isActiveSlot = idx === pin.length || (pin.length === 6 && idx === 5);
                 return (
                   <div
                     key={idx}
-                    className={`w-10 h-12 md:w-12 md:h-14 border rounded-[2px] flex items-center justify-center font-mono text-xl font-bold transition-all ${
+                    className={`w-10 h-12 md:w-12 md:h-14 border rounded-[2px] flex items-center justify-center font-mono text-xl font-bold transition-all select-none ${
                       char
                         ? 'border-ink-primary bg-paper-dark text-ink-primary'
+                        : isActiveSlot
+                        ? 'border-ink-primary/70 bg-paper-dark/50 text-ink-ghost ring-1 ring-ink-primary/20'
                         : 'border-bone bg-paper-dark/30 text-ink-ghost'
                     }`}
                   >
-                    {char ? '•' : ''}
+                    {char || ''}
                   </div>
                 );
               })}
             </div>
 
-            <p className="text-[11px] font-sans text-center text-ink-secondary mt-3">
-              Enter the verification PIN provided in your dispatch notification.
-            </p>
+            <div className="flex flex-col items-center gap-1.5 mt-3">
+              <button
+                type="button"
+                onClick={handlePasteFromClipboard}
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-ink-primary bg-paper-dark hover:bg-bone/60 border border-bone rounded-[1px] transition-colors"
+              >
+                <ClipboardPaste className="w-3 h-3" />
+                <span>Paste PIN from Clipboard</span>
+              </button>
+              <p className="text-[11px] font-sans text-center text-ink-secondary">
+                Paste (<span className="font-mono">Cmd+V</span> / <span className="font-mono">Ctrl+V</span>), type on your keyboard, or use the keypad below.
+              </p>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -187,4 +297,3 @@ export function PinChallenge({
     </div>
   );
 }
-

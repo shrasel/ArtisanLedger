@@ -173,6 +173,24 @@ assert.ok(
   dispatchModalSource.includes('shahjahan.rasell@gmail.com'),
   'DispatchInvoiceModal must support one-click test email routing to shahjahan.rasell@gmail.com'
 );
+
+const pinChallengeSource = fs.readFileSync(
+  path.join(rootDir, 'src', 'components', 'invoice', 'PinChallenge.tsx'),
+  'utf8'
+);
+assert.ok(
+  pinChallengeSource.includes('onPaste') && pinChallengeSource.includes('handlePasteFromClipboard'),
+  'PinChallenge.tsx must support clipboard copy/paste as well as keypad entry'
+);
+
+const lineItemEditorSource = fs.readFileSync(
+  path.join(rootDir, 'src', 'components', 'invoice', 'LineItemEditor.tsx'),
+  'utf8'
+);
+assert.ok(
+  lineItemEditorSource.includes('focusedRateIndex') && lineItemEditorSource.includes('focusedRateText'),
+  'LineItemEditor.tsx must preserve raw input state while focused so cursor does not jump'
+);
 console.log('  ✓ Passed: Tokenized links, bcrypt PIN verification, and Pre-Dispatch Email Studio verified.\n');
 
 // ---------------------------------------------------------------------------

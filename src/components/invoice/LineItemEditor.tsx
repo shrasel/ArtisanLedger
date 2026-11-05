@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { formatCentsToCurrency, parseCurrencyToCents } from '@/lib/utils';
 
@@ -27,6 +27,11 @@ export function LineItemEditor({
 }: LineItemEditorProps) {
   const lastPriceInputRef = useRef<HTMLInputElement>(null);
 
+  // Track the raw text of whichever Unit Rate input is currently focused
+  // so `.toFixed(2)` never hijacks the cursor while the user is typing.
+  const [focusedRateIndex, setFocusedRateIndex] = useState<number | null>(null);
+  const [focusedRateText, setFocusedRateText] = useState<string>('');
+
   const updateItem = (index: number, patch: Partial<EditableItem>) => {
     const next = [...items];
     const current = next[index];
@@ -50,6 +55,10 @@ export function LineItemEditor({
   };
 
   const removeItem = (index: number) => {
+    if (focusedRateIndex === index) {
+      setFocusedRateIndex(null);
+      setFocusedRateText('');
+    }
     if (items.length <= 1) {
       // keep at least 1 empty row
       onChange([{ description: '', quantity: 1, unitPriceCents: 0, totalCents: 0 }]);
@@ -97,6 +106,9 @@ export function LineItemEditor({
       <div className="space-y-1">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
+          const isRateFocused = focusedRateIndex === index;
+          const formattedRate =
+            item.unitPriceCents === 0 ? '' : (item.unitPriceCents / 100).toFixed(2);
 
           return (
             <div
@@ -154,11 +166,30 @@ export function LineItemEditor({
                   <input
                     ref={isLast ? lastPriceInputRef : undefined}
                     type="text"
-                    value={item.unitPriceCents === 0 ? '' : (item.unitPriceCents / 100).toFixed(2)}
+                    inputMode="decimal"
+                    value={isRateFocused ? focusedRateText : formattedRate}
                     placeholder="0.00"
+                    onFocus={() => {
+                      setFocusedRateIndex(index);
+                      setFocusedRateText(
+                        item.unitPriceCents === 0
+                          ? ''
+                          : Number.isInteger(item.unitPriceCents / 100)
+                          ? String(item.unitPriceCents / 100)
+                          : (item.unitPriceCents / 100).toFixed(2)
+                      );
+                    }}
                     onChange={(e) => {
-                      const cents = parseCurrencyToCents(e.target.value);
+                      const raw = e.target.value;
+                      // Allow only digits and at most one decimal point while typing
+                      if (!/^\d*\.?\d{0,2}$/.test(raw)) return;
+                      setFocusedRateText(raw);
+                      const cents = parseCurrencyToCents(raw);
                       updateItem(index, { unitPriceCents: cents });
+                    }}
+                    onBlur={() => {
+                      setFocusedRateIndex(null);
+                      setFocusedRateText('');
                     }}
                     onKeyDown={(e) => handleKeyDown(e, index, 'price')}
                     className="w-full bg-transparent px-2 py-1 text-xs font-mono text-right text-ink-primary placeholder:text-ink-ghost/60 focus:bg-paper-dark/50 focus:outline-none rounded-[1px] border border-transparent focus:border-bone transition-all"
@@ -207,4 +238,3 @@ export function LineItemEditor({
     </div>
   );
 }
-

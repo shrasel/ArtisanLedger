@@ -100,6 +100,8 @@ export function InvoicePaperSheet({
   const [discountCents, setDiscountCents] = useState<number>(
     initialInvoice?.discountCents || 0
   );
+  const [discountFocused, setDiscountFocused] = useState(false);
+  const [discountText, setDiscountText] = useState('');
 
   // Quick Client Drawer modal state
   const [showAddClient, setShowAddClient] = useState(false);
@@ -725,9 +727,35 @@ export function InvoicePaperSheet({
                   <span className="font-mono text-xs text-ink-ghost">-</span>
                   <input
                     type="text"
-                    value={discountCents === 0 ? '' : (discountCents / 100).toFixed(2)}
+                    inputMode="decimal"
+                    value={
+                      discountFocused
+                        ? discountText
+                        : discountCents === 0
+                        ? ''
+                        : (discountCents / 100).toFixed(2)
+                    }
                     placeholder="0.00"
-                    onChange={(e) => setDiscountCents(parseCurrencyToCents(e.target.value))}
+                    onFocus={() => {
+                      setDiscountFocused(true);
+                      setDiscountText(
+                        discountCents === 0
+                          ? ''
+                          : Number.isInteger(discountCents / 100)
+                          ? String(discountCents / 100)
+                          : (discountCents / 100).toFixed(2)
+                      );
+                    }}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (!/^\d*\.?\d{0,2}$/.test(raw)) return;
+                      setDiscountText(raw);
+                      setDiscountCents(parseCurrencyToCents(raw));
+                    }}
+                    onBlur={() => {
+                      setDiscountFocused(false);
+                      setDiscountText('');
+                    }}
                     className="w-20 bg-paper-dark border border-bone px-1.5 py-0.5 font-mono text-xs text-right text-ink-primary rounded-[1px] focus:outline-none focus:border-ink-primary"
                   />
                 </div>
@@ -1039,11 +1067,24 @@ export function InvoicePaperSheet({
               <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-ink-secondary mb-1">
                 Client Verification Passcode (PIN)
               </div>
-              <div className="font-mono text-3xl font-bold tracking-[0.3em] text-status-vermilion select-all">
-                {dispatchInfo.passcode}
+              <div className="flex items-center justify-center gap-3 my-1">
+                <div className="font-mono text-3xl font-bold tracking-[0.3em] text-status-vermilion select-all">
+                  {dispatchInfo.passcode}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(dispatchInfo.passcode);
+                  }}
+                  title="Copy 6-Digit PIN"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider bg-ink-primary text-paper rounded-[1px] hover:bg-black transition-colors"
+                >
+                  <Copy className="w-3 h-3" />
+                  <span>Copy PIN</span>
+                </button>
               </div>
               <p className="text-[11px] font-sans text-ink-secondary mt-2">
-                The recipient must enter this 6-digit PIN on the access envelope to view the invoice.
+                The recipient can copy-paste or enter this 6-digit PIN on the access envelope to view the invoice.
               </p>
             </div>
 
