@@ -1,7 +1,9 @@
 import { Resend } from 'resend';
 
-interface SendInvoiceEmailOptions {
-  recipientEmail: string;
+export interface SendInvoiceEmailOptions {
+  recipientEmail: string | string[];
+  ccEmails?: string[];
+  bccEmails?: string[];
   recipientName: string;
   senderName: string;
   companyName: string;
@@ -10,11 +12,32 @@ interface SendInvoiceEmailOptions {
   dueDateFormatted: string;
   passcode: string;
   viewUrl: string;
+  customSubject?: string;
+  customMessage?: string;
+}
+
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+export function formatCustomMessageHtml(rawMessage: string): string {
+  const escaped = escapeHtml(rawMessage.trim());
+  return escaped
+    .split(/\n{2,}/)
+    .map((para) => `<p style="margin: 0 0 14px 0;">${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
 }
 
 export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   const {
     recipientEmail,
+    ccEmails = [],
+    bccEmails = [],
     recipientName,
     senderName,
     companyName,
@@ -23,7 +46,22 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
     dueDateFormatted,
     passcode,
     viewUrl,
+    customSubject,
+    customMessage,
   } = options;
+
+  const toList = Array.isArray(recipientEmail)
+    ? recipientEmail.map((e) => e.trim()).filter(Boolean)
+    : [recipientEmail.trim()].filter(Boolean);
+  const ccList = ccEmails.map((e) => e.trim()).filter(Boolean);
+  const bccList = bccEmails.map((e) => e.trim()).filter(Boolean);
+
+  const subjectLine =
+    customSubject?.trim() || `Invoice ${invoiceNumber} from ${companyName || senderName}`;
+
+  const greetingHtml = customMessage?.trim()
+    ? formatCustomMessageHtml(customMessage)
+    : `Dear ${escapeHtml(recipientName || 'Valued Client')},<br><br>An invoice has been issued by <strong>${escapeHtml(companyName || senderName)}</strong>.`;
 
   const resendApiKey = process.env.RESEND_API_KEY;
 
@@ -32,7 +70,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Invoice ${invoiceNumber} from ${companyName}</title>
+  <title>${escapeHtml(subjectLine)}</title>
   <style>
     body {
       background-color: #111215;
@@ -69,8 +107,8 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       padding: 36px;
     }
     .greeting {
-      font-size: 16px;
-      line-height: 1.6;
+      font-size: 15px;
+      line-height: 1.65;
       color: #18191B;
       margin-bottom: 24px;
     }
@@ -152,32 +190,31 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>The Architect's Ledger</h1>
+      <h1>${escapeHtml(companyName || senderName || "The Architect's Ledger")}</h1>
     </div>
     <div class="content">
       <div class="greeting">
-        Dear ${recipientName || 'Valued Client'},<br><br>
-        An invoice has been issued by <strong>${companyName || senderName}</strong>.
+        ${greetingHtml}
       </div>
 
       <table class="metadata-table">
         <tr>
           <td class="label">Invoice Reference</td>
-          <td class="val">${invoiceNumber}</td>
+          <td class="val">${escapeHtml(invoiceNumber)}</td>
         </tr>
         <tr>
           <td class="label">Total Amount Due</td>
-          <td class="val">${totalFormatted}</td>
+          <td class="val">${escapeHtml(totalFormatted)}</td>
         </tr>
         <tr>
           <td class="label">Payment Due Date</td>
-          <td class="val">${dueDateFormatted}</td>
+          <td class="val">${escapeHtml(dueDateFormatted)}</td>
         </tr>
       </table>
 
       <div class="pin-box">
         <div class="pin-label">Secure Access Verification Code (PIN)</div>
-        <div class="pin-code">${passcode}</div>
+        <div class="pin-code">${escapeHtml(passcode)}</div>
       </div>
 
       <div class="cta-container">
@@ -198,8 +235,10 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       const resend = new Resend(resendApiKey);
       const data = await resend.emails.send({
         from: process.env.EMAIL_FROM || 'Ledger <invoices@architectsledger.com>',
-        to: recipientEmail,
-        subject: `Invoice ${invoiceNumber} from ${companyName || senderName}`,
+        to: toList,
+        ...(ccList.length > 0 ? { cc: ccList } : {}),
+        ...(bccList.length > 0 ? { bcc: bccList } : {}),
+        subject: subjectLine,
         html: htmlContent,
       });
       return { success: true, data, simulated: false };
@@ -212,7 +251,10 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   // Fallback simulator for development without Resend API key
   console.log(`\n======================================================`);
   console.log(`[SIMULATED TRANSACTIONAL EMAIL DISPATCH]`);
-  console.log(`To: ${recipientEmail} (${recipientName})`);
+  console.log(`To: ${toList.join(', ')} (${recipientName})`);
+  if (ccList.length > 0) console.log(`CC: ${ccList.join(', ')}`);
+  if (bccList.length > 0) console.log(`BCC: ${bccList.join(', ')}`);
+  console.log(`Subject: ${subjectLine}`);
   console.log(`Invoice: ${invoiceNumber} | Total: ${totalFormatted}`);
   console.log(`Verification PIN: ${passcode}`);
   console.log(`Access Portal URL: ${viewUrl}`);
@@ -220,4 +262,3 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
 
   return { success: true, simulated: true, passcode, viewUrl };
 }
-

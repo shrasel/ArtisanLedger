@@ -135,7 +135,27 @@ for (const inv of allInvoices) {
 const testHash = bcrypt.hashSync('948271', 10);
 assert.strictEqual(bcrypt.compareSync('948271', testHash), true, 'Correct PIN must unlock');
 assert.strictEqual(bcrypt.compareSync('000000', testHash), false, 'Wrong PIN must be rejected');
-console.log('  ✓ Passed: Tokenized links and bcrypt PIN verification working properly.\n');
+
+// Verify Pre-Dispatch Studio Modal & Multi-Recipient Email Engine
+const dispatchModalPath = path.join(rootDir, 'src', 'components', 'invoice', 'DispatchInvoiceModal.tsx');
+assert.ok(fs.existsSync(dispatchModalPath), 'DispatchInvoiceModal.tsx must exist');
+const dispatchModalSource = fs.readFileSync(dispatchModalPath, 'utf8');
+assert.ok(
+  dispatchModalSource.includes('Client Invoice View') &&
+    dispatchModalSource.includes('Email Template Preview'),
+  'DispatchInvoiceModal must provide both Client Invoice View and Email Template Preview tabs'
+);
+assert.ok(
+  dispatchModalSource.includes('ccEmails') && dispatchModalSource.includes('customMessage'),
+  'DispatchInvoiceModal must support multi-recipient CC chips and on-the-fly editable email body'
+);
+
+const emailLibSource = fs.readFileSync(path.join(rootDir, 'src', 'lib', 'email.ts'), 'utf8');
+assert.ok(
+  emailLibSource.includes('ccEmails') && emailLibSource.includes('customMessage'),
+  'src/lib/email.ts must accept ccEmails and customMessage'
+);
+console.log('  ✓ Passed: Tokenized links, bcrypt PIN verification, and Pre-Dispatch Email Studio verified.\n');
 
 // ---------------------------------------------------------------------------
 // SUITE 5: PDF Engine Invariants (US Letter Size & Header Spacing)

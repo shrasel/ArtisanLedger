@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { StatusStamp } from './StatusStamp';
 import { LineItemEditor, type EditableItem } from './LineItemEditor';
+import { DispatchInvoiceModal, type DispatchEmailPayload } from './DispatchInvoiceModal';
 import type { Organization, Client, Invoice } from '@/db/schema';
 import {
   formatCentsToCurrency,
@@ -109,11 +110,13 @@ export function InvoicePaperSheet({
   const [localClients, setLocalClients] = useState<Client[]>(clientsList);
 
   // Dispatch modal state
+  const [showDispatchStudio, setShowDispatchStudio] = useState(false);
   const [dispatchInfo, setDispatchInfo] = useState<{
     passcode: string;
     accessToken: string;
     viewUrl: string;
     emailStatus: string;
+    recipients?: { to: string[]; cc: string[]; bcc: string[] };
   } | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -207,8 +210,8 @@ export function InvoicePaperSheet({
     });
   };
 
-  // Dispatch / Send Invoice
-  const handleDispatch = async () => {
+  // Confirm & Dispatch Invoice from Pre-Dispatch Studio Modal
+  const handleConfirmDispatch = async (emailPayload: DispatchEmailPayload) => {
     setFeedbackMessage(null);
     startTransition(async () => {
       try {
@@ -240,9 +243,11 @@ export function InvoicePaperSheet({
         const saveData = await saveRes.json();
         const activeId = invoiceId || saveData.invoice?.id;
 
-        // Trigger dispatch
+        // Trigger dispatch with customized recipients, subject, and message
         const dispatchRes = await fetch(`/api/invoices/${activeId}/dispatch`, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(emailPayload),
         });
         const dispatchData = await dispatchRes.json();
 
@@ -250,11 +255,17 @@ export function InvoicePaperSheet({
           throw new Error(dispatchData.error || 'Failed to dispatch invoice');
         }
 
+        setShowDispatchStudio(false);
         setStatus('SENT');
         setDispatchInfo({
           passcode: dispatchData.passcode,
           accessToken: dispatchData.accessToken,
           viewUrl: dispatchData.viewUrl,
+          recipients: dispatchData.recipients || {
+            to: emailPayload.to,
+            cc: emailPayload.cc,
+            bcc: emailPayload.bcc,
+          },
           emailStatus: dispatchData.simulated
             ? 'Simulated Dispatch (Check terminal or use PIN below)'
             : 'Dispatched via Resend with tokenized link & PIN',
@@ -383,7 +394,7 @@ export function InvoicePaperSheet({
 
             <button
               type="button"
-              onClick={handleDispatch}
+              onClick={() => setShowDispatchStudio(true)}
               disabled={isPending}
               className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono uppercase tracking-wider text-obsidian bg-bone hover:bg-paper font-semibold rounded-[2px] transition-colors shadow-md"
             >
@@ -453,8 +464,8 @@ export function InvoicePaperSheet({
           </span>
         </div>
 
-        {/* Paper Sheet Header (Document Letterhead) */}
-        <div className="relative border-b-2 border-ink-primary pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        {/* Paper Sheet Header (Document Letterhead — No underline, no status stamp on sheet) */}
+        <div className="relative mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             {(organization.letterheadTagline ?? 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER') && (
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-1">
@@ -471,25 +482,15 @@ export function InvoicePaperSheet({
               Document No. <span className="font-mono font-semibold">{invoiceNumber}</span>
             </p>
           </div>
-
-          <div className="flex flex-col items-start md:items-end gap-2">
-            <StatusStamp status={status} size="md" />
-            <div className="text-[11px] font-mono text-ink-ghost">
-              Ref ID: {initialInvoice?.id ? initialInvoice.id.slice(0, 8).toUpperCase() : 'PENDING'}
-            </div>
-          </div>
         </div>
 
-        {/* Structured Grid Metadata: Issuer & Debtor */}
+        {/* Structured Grid Metadata: From & Billed to */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 mb-8 border-b border-bone">
-          {/* Issuer / Seller Info (Firm Entity) */}
+          {/* Sender / From Info */}
           <div>
             <h2 className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-ink-secondary mb-3 flex items-center gap-1.5">
               <Building2 className="w-3 h-3 text-ink-ghost" />
-              <span>
-                Issuer / Creditor{' '}
-                {organization.entityType === 'INDIVIDUAL' ? '(Individual)' : '(Firm Entity)'}
-              </span>
+              <span>From</span>
             </h2>
             <div className="space-y-1 text-sm font-sans text-ink-secondary">
               {organization.entityType === 'INDIVIDUAL' ? (
@@ -537,12 +538,12 @@ export function InvoicePaperSheet({
             </div>
           </div>
 
-          {/* Client / Debtor Info */}
+          {/* Client / Billed to Info */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-ink-secondary flex items-center gap-1.5">
                 <FileText className="w-3 h-3 text-ink-ghost" />
-                <span>Debtor / Billed To</span>
+                <span>Billed to</span>
               </h2>
 
               {!readOnly && (
@@ -600,10 +601,14 @@ export function InvoicePaperSheet({
         </div>
 
         {/* Invoice Key Dates & Number Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 mb-8 bg-paper-dark/70 border border-bone rounded-[1px]">
+        <div
+          className={`grid grid-cols-2 ${
+            readOnly ? 'sm:grid-cols-3' : 'sm:grid-cols-4'
+          } gap-4 p-4 mb-8 bg-paper-dark/70 border border-bone rounded-[1px]`}
+        >
           <div>
             <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block">
-              Invoice Identifier
+              Invoice No.
             </label>
             {readOnly ? (
               <div className="font-mono text-sm font-bold text-ink-primary mt-1">
@@ -621,7 +626,7 @@ export function InvoicePaperSheet({
 
           <div>
             <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block">
-              Date of Issue
+              Issue Date
             </label>
             {readOnly ? (
               <div className="font-mono text-xs text-ink-primary mt-1">
@@ -639,7 +644,7 @@ export function InvoicePaperSheet({
 
           <div>
             <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block">
-              Payment Due
+              Due Date
             </label>
             {readOnly ? (
               <div className="font-mono text-xs text-ink-primary mt-1">
@@ -655,15 +660,11 @@ export function InvoicePaperSheet({
             )}
           </div>
 
-          <div>
-            <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block">
-              Ledger Currency
-            </label>
-            {readOnly ? (
-              <div className="font-mono text-sm font-bold text-ink-primary mt-1">
-                {currency}
-              </div>
-            ) : (
+          {!readOnly && (
+            <div>
+              <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block">
+                Ledger Currency
+              </label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
@@ -676,8 +677,8 @@ export function InvoicePaperSheet({
                 <option value="AUD">AUD ($)</option>
                 <option value="CHF">CHF</option>
               </select>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* LINE ITEM EDITOR */}
@@ -981,6 +982,25 @@ export function InvoicePaperSheet({
         </div>
       )}
 
+      {/* PRE-DISPATCH REVIEW & EMAIL COMPOSER STUDIO MODAL */}
+      <DispatchInvoiceModal
+        key={`${selectedClientId}-${invoiceNumber}-${showDispatchStudio}`}
+        isOpen={showDispatchStudio}
+        isSubmitting={isPending}
+        onClose={() => setShowDispatchStudio(false)}
+        onConfirmDispatch={handleConfirmDispatch}
+        invoiceNumber={invoiceNumber}
+        issueDate={issueDate}
+        dueDate={dueDate}
+        currency={currency}
+        items={items}
+        totals={totals}
+        notes={notes}
+        terms={terms}
+        organization={organization}
+        client={activeClient}
+      />
+
       {/* DISPATCH CONFIRMATION / PIN DETAILS DRAWER */}
       {dispatchInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/85 backdrop-blur-sm p-4">
@@ -995,6 +1015,22 @@ export function InvoicePaperSheet({
               <p className="text-xs font-sans text-ink-secondary mt-1">
                 {dispatchInfo.emailStatus}
               </p>
+              {dispatchInfo.recipients && (
+                <div className="mt-2 text-[11px] font-mono text-ink-secondary">
+                  <div>
+                    <span className="uppercase text-ink-ghost">To:</span>{' '}
+                    <span className="font-bold text-ink-primary">
+                      {dispatchInfo.recipients.to.join(', ')}
+                    </span>
+                  </div>
+                  {dispatchInfo.recipients.cc.length > 0 && (
+                    <div>
+                      <span className="uppercase text-ink-ghost">CC:</span>{' '}
+                      <span>{dispatchInfo.recipients.cc.join(', ')}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="my-6 p-4 bg-[#ECE6DC] border border-dashed border-[#5C5E62] rounded-[2px] text-center">
