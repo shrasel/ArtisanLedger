@@ -43,3 +43,14 @@ Whenever you add or modify a feature:
    ```
 3. If the production server daemon is running on port `3005`, restart it after `npm run build` so the live server reflects the compiled changes.
 
+---
+
+## 4. Pre-Commit & Atomic Git Workflow
+Before creating any git commit:
+1. Run `node scripts/run-all-tests.js` and ensure 100% pass rate.
+2. Inspect `git status` and stage only explicit modified/created source files (`git add <file1> <file2>`). Never stage `ledger.db*`, `.env*`, or temporary artifacts.
+3. Format the commit message strictly using **Conventional Commits v1.0.0**:
+   `<type>(<scope>): <imperative summary>` (e.g., `feat(invoice): ...`, `fix(pdf): ...`, `test(ledger): ...`).
+4. Never use `--no-verify`, `git reset --hard`, or `git push --force`.
+
+

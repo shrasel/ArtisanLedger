@@ -43,3 +43,23 @@ Whenever asked to add, enhance, or remove any feature:
    - If adding a new feature, add a corresponding test assertion to the verification suite.
    - Run `npm run build` when modifying routes, types, or global CSS.
 
+---
+
+## 4. Git & Version Control Governance (Industry Standard)
+
+1. **Conventional Commits v1.0.0 Specification**:
+   - Every commit message MUST follow `<type>(<scope>): <imperative summary>` (max 72 chars on the subject line).
+   - **Allowed Types**: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `security`.
+   - **Allowed Scopes**: `schema`, `invoice`, `client`, `pdf`, `theme`, `auth`, `delivery`, `agent`.
+   - *Example*: `feat(client): add cascade confirmation modal for client deletion`
+2. **Pre-Commit Verification Gate (Zero Broken Commits)**:
+   - **NEVER** create a git commit unless `node scripts/run-all-tests.js` (`npm test`) has just been executed and passed 100%.
+   - **NEVER** bypass git hooks with `--no-verify`.
+3. **Explicit Staging & Secret/Artifact Hygiene**:
+   - **NEVER** run blind `git add .` or `git add -A` without inspecting `git status` first.
+   - Stage explicit file paths (`git add <path1> <path2>`) and **NEVER** stage `.env*`, `ledger.db*`, `.next/`, or temporary test artifacts (`*.pdf`, `*.png`).
+   - Keep commits **atomic**: one logical feature or bug fix per commit so any commit can be cleanly reverted (`git revert <sha>`).
+4. **Forbidden Destructive Git Operations**:
+   - **NEVER** execute `git reset --hard`, `git push --force`, `git clean -fd`, `git checkout -- .`, or `git branch -D` without explicit user authorization.
+
+

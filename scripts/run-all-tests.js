@@ -243,7 +243,18 @@ if (testOrg) {
   const checkCli = db.prepare('SELECT * FROM clients WHERE id = ?').get(tmpClientId);
   assert.strictEqual(checkCli, undefined, 'Deleted client must not exist');
 }
-console.log('  ✓ Passed: Invoice and Client deletion routes and DB cascade integrity verified.\n');
+
+const agentsRulePath = path.join(rootDir, 'AGENTS.md');
+const agentsRuleSource = fs.readFileSync(agentsRulePath, 'utf8');
+assert.ok(
+  agentsRuleSource.includes('Conventional Commits v1.0.0'),
+  'AGENTS.md must enforce Conventional Commits v1.0.0'
+);
+assert.ok(
+  agentsRuleSource.includes('Forbidden Destructive Git Operations'),
+  'AGENTS.md must forbid destructive git operations'
+);
+console.log('  ✓ Passed: Invoice and Client deletion routes, DB cascade integrity, and Git governance verified.\n');
 
 console.log('==============================================================');
 console.log('   ALL 7 VERIFICATION SUITES PASSED WITH 100% SUCCESS');
