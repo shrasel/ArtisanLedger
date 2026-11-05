@@ -4,7 +4,14 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Landmark, Settings2, Save, Check, Loader2, FileText, User, Mail } from 'lucide-react';
 import type { Organization, Client } from '@/db/schema';
-import { parsePercentToBasisPoints, formatBasisPointsToPercent } from '@/lib/utils';
+import {
+  parsePercentToBasisPoints,
+  formatInvoiceNumber,
+  resolveTermsDays,
+  addDaysToDateString,
+  getRelativeDateString,
+  formatEditorialDate,
+} from '@/lib/utils';
 
 interface SettingsFormProps {
   organization: Organization;
@@ -34,6 +41,7 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
     country: organization.country || 'US',
     defaultCurrency: organization.defaultCurrency || 'USD',
     defaultTerms: organization.defaultTerms || 'NET_30',
+    defaultCustomTermsDays: organization.defaultCustomTermsDays ?? 14,
     defaultClientId: organization.defaultClientId || '',
     invoicePrefix: organization.invoicePrefix || 'INV-',
     nextInvoiceNumber: organization.nextInvoiceNumber || 1001,
@@ -359,12 +367,148 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
                   Document Standards &amp; Defaults
                 </h2>
                 <span className="text-[10px] font-sans text-bone-dark block mt-1">
-                  Default currency, numbering sequence, payment terms, and tax rate.
+                  Customizable invoice numbering pattern, due-date payment terms, currency, and default tax rate.
                 </span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Customizable Invoice Number Pattern */}
+              <div className="sm:col-span-2 p-3.5 bg-obsidian/40 border border-obsidian-border rounded-[2px] space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                      Invoice Number Pattern / Prefix
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="INV-{YEAR}-{MONTH}-{DAY}"
+                      value={formData.invoicePrefix}
+                      onChange={(e) => handleChange('invoicePrefix', e.target.value)}
+                      className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                      Next Sequence #
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={formData.nextInvoiceNumber}
+                      onChange={(e) => handleChange('nextInvoiceNumber', e.target.value)}
+                      className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Variable Chips */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-ink-ghost mr-1">
+                    Variables:
+                  </span>
+                  {['{YEAR}', '{MONTH}', '{DAY}', '{SEQ}'].map((token) => (
+                    <button
+                      key={token}
+                      type="button"
+                      onClick={() => {
+                        const current = formData.invoicePrefix || '';
+                        const needsDash =
+                          current.length > 0 && !current.endsWith('-') && !current.endsWith('/');
+                        handleChange(
+                          'invoicePrefix',
+                          `${current}${needsDash ? '-' : ''}${token}`
+                        );
+                      }}
+                      className="px-2 py-0.5 text-[10px] font-mono bg-obsidian border border-obsidian-border text-paper hover:border-bone rounded-[1px] transition-colors"
+                    >
+                      + {token}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleChange('invoicePrefix', 'INV-{YEAR}-{MONTH}-{DAY}')}
+                    className="px-2 py-0.5 text-[10px] font-mono bg-status-brass/15 border border-status-brass/50 text-status-brass hover:bg-status-brass/25 rounded-[1px] transition-colors font-semibold"
+                  >
+                    Preset: INV-&#123;YEAR&#125;-&#123;MONTH&#125;-&#123;DAY&#125;
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChange('invoicePrefix', 'INV-')}
+                    className="px-2 py-0.5 text-[10px] font-mono bg-obsidian border border-obsidian-border text-ink-ghost hover:text-paper rounded-[1px] transition-colors"
+                  >
+                    Reset: INV-
+                  </button>
+                </div>
+
+                {/* Live Resolved Invoice Number Output */}
+                <div className="flex items-center justify-between pt-2 border-t border-obsidian-border/80 text-xs">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-ink-ghost">
+                    Next Generated Invoice Number:
+                  </span>
+                  <span className="font-mono text-xs font-bold text-status-brass bg-obsidian px-2.5 py-1 border border-obsidian-border rounded-[1px]">
+                    {formatInvoiceNumber(
+                      formData.invoicePrefix,
+                      formData.nextInvoiceNumber
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Default Terms & Due Date Calculation */}
+              <div className={formData.defaultTerms === 'CUSTOM' ? 'sm:col-span-1' : 'sm:col-span-2'}>
+                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                  Default Payment Terms (Calculates Due Date)
+                </label>
+                <select
+                  value={formData.defaultTerms}
+                  onChange={(e) => handleChange('defaultTerms', e.target.value)}
+                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                >
+                  <option value="DUE_ON_RECEIPT">Due on Receipt (0 Days)</option>
+                  <option value="NET_5">5 Days (Net 5)</option>
+                  <option value="NET_10">10 Days (Net 10)</option>
+                  <option value="NET_15">15 Days (Net 15)</option>
+                  <option value="NET_30">30 Days (Net 30)</option>
+                  <option value="NET_60">60 Days (Net 60)</option>
+                  <option value="CUSTOM">Custom Days...</option>
+                </select>
+                <span className="text-[10px] font-mono text-ink-ghost block mt-1">
+                  Due Date Preview: Today +{' '}
+                  {resolveTermsDays(formData.defaultTerms, formData.defaultCustomTermsDays)} days &rarr;{' '}
+                  <strong className="text-paper">
+                    {formatEditorialDate(
+                      addDaysToDateString(
+                        getRelativeDateString(0),
+                        resolveTermsDays(formData.defaultTerms, formData.defaultCustomTermsDays)
+                      )
+                    )}
+                  </strong>
+                </span>
+              </div>
+
+              {formData.defaultTerms === 'CUSTOM' && (
+                <div>
+                  <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                    Custom Due Date Offset (Days)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={3650}
+                      value={formData.defaultCustomTermsDays}
+                      onChange={(e) =>
+                        handleChange('defaultCustomTermsDays', parseInt(e.target.value, 10) || 0)
+                      }
+                      className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                    />
+                    <span className="text-xs font-mono text-bone-dark shrink-0">Days</span>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
                   Ledger Currency
@@ -383,45 +527,21 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
 
               <div>
                 <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Invoice Prefix
+                  Default Tax Rate (%)
                 </label>
-                <input
-                  type="text"
-                  value={formData.invoicePrefix}
-                  onChange={(e) => handleChange('invoicePrefix', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={formData.defaultTaxPercent}
+                    onChange={(e) => handleChange('defaultTaxPercent', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+                  />
+                  <span className="text-xs font-mono text-bone-dark">%</span>
+                </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Next Invoice Number
-                </label>
-                <input
-                  type="number"
-                  value={formData.nextInvoiceNumber}
-                  onChange={(e) => handleChange('nextInvoiceNumber', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Default Terms
-                </label>
-                <select
-                  value={formData.defaultTerms}
-                  onChange={(e) => handleChange('defaultTerms', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                >
-                  <option value="DUE_ON_RECEIPT">Due on Receipt</option>
-                  <option value="NET_15">Net 15 Days</option>
-                  <option value="NET_30">Net 30 Days</option>
-                  <option value="NET_60">Net 60 Days</option>
-                </select>
-              </div>
-
-              <div>
+              <div className="sm:col-span-2">
                 <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
                   Default Billing Client
                 </label>
@@ -437,22 +557,6 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Default Tax Rate (%)
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={formData.defaultTaxPercent}
-                    onChange={(e) => handleChange('defaultTaxPercent', e.target.value)}
-                    placeholder="0.00"
-                    className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                  />
-                  <span className="text-xs font-mono text-bone-dark">%</span>
-                </div>
               </div>
             </div>
           </div>

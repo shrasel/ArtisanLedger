@@ -27,6 +27,9 @@ import {
   parseCurrencyToCents,
   calculateInvoiceTotals,
   getRelativeDateString,
+  addDaysToDateString,
+  resolveTermsDays,
+  formatInvoiceNumber,
   formatEditorialDate,
 } from '@/lib/utils';
 
@@ -50,11 +53,22 @@ export function InvoicePaperSheet({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const defaultTermsDays = resolveTermsDays(
+    organization.defaultTerms,
+    organization.defaultCustomTermsDays
+  );
+  const initialIssueDateStr = initialInvoice?.issueDate || getRelativeDateString(0);
+
   // Invoice form state
   const [invoiceId] = useState<string | undefined>(initialInvoice?.id);
   const [status, setStatus] = useState<string>(initialInvoice?.status || 'DRAFT');
   const [invoiceNumber, setInvoiceNumber] = useState<string>(
-    initialInvoice?.invoiceNumber || `${organization.invoicePrefix || 'INV-'}${organization.nextInvoiceNumber || '1001'}`
+    initialInvoice?.invoiceNumber ||
+      formatInvoiceNumber(
+        organization.invoicePrefix,
+        organization.nextInvoiceNumber,
+        initialIssueDateStr
+      )
   );
   const defaultClientCandidate =
     initialInvoice?.clientId ||
@@ -63,12 +77,32 @@ export function InvoicePaperSheet({
     (clientsList[0]?.id ?? '');
 
   const [selectedClientId, setSelectedClientId] = useState<string>(defaultClientCandidate);
-  const [issueDate, setIssueDate] = useState<string>(
-    initialInvoice?.issueDate || getRelativeDateString(0)
-  );
+  const [issueDate, setIssueDate] = useState<string>(initialIssueDateStr);
   const [dueDate, setDueDate] = useState<string>(
-    initialInvoice?.dueDate || getRelativeDateString(30)
+    initialInvoice?.dueDate || addDaysToDateString(initialIssueDateStr, defaultTermsDays)
   );
+  const [activeTermsDays, setActiveTermsDays] = useState<number>(defaultTermsDays);
+
+  const handleIssueDateChange = (newIssueDate: string) => {
+    setIssueDate(newIssueDate);
+    if (newIssueDate && /^\d{4}-\d{2}-\d{2}$/.test(newIssueDate)) {
+      // Recalculate Due Date from Issue Date + active payment terms days
+      setDueDate(addDaysToDateString(newIssueDate, activeTermsDays));
+      // If this is a new draft and the organization prefix uses date variables ({YEAR}, {MONTH}, {DAY}), sync the invoice number
+      if (
+        !invoiceId &&
+        /\{(YEAR|YYYY|YY|MONTH|MM|DAY|DD)\}/i.test(organization.invoicePrefix || '')
+      ) {
+        setInvoiceNumber(
+          formatInvoiceNumber(
+            organization.invoicePrefix,
+            organization.nextInvoiceNumber,
+            newIssueDate
+          )
+        );
+      }
+    }
+  };
   const [currency, setCurrency] = useState<string>(
     initialInvoice?.currency || organization.defaultCurrency || 'USD'
   );
@@ -679,27 +713,55 @@ export function InvoicePaperSheet({
               <input
                 type="date"
                 value={issueDate}
-                onChange={(e) => setIssueDate(e.target.value)}
+                onChange={(e) => handleIssueDateChange(e.target.value)}
                 className="w-full bg-transparent font-mono text-xs text-ink-primary border-b border-transparent hover:border-bone focus:border-ink-primary focus:outline-none px-0 py-0.5 mt-0.5"
               />
             )}
           </div>
 
           <div>
-            <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block">
-              Due Date
-            </label>
+            <div className="flex items-center justify-between gap-1">
+              <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block">
+                Due Date
+              </label>
+              {!readOnly && (
+                <span className="text-[9px] font-mono uppercase tracking-wider text-ink-ghost">
+                  {activeTermsDays === 0 ? 'On Receipt' : `+${activeTermsDays}d`}
+                </span>
+              )}
+            </div>
             {readOnly ? (
               <div className="font-mono text-xs text-ink-primary mt-1">
                 {formatEditorialDate(dueDate)}
               </div>
             ) : (
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full bg-transparent font-mono text-xs text-ink-primary border-b border-transparent hover:border-bone focus:border-ink-primary focus:outline-none px-0 py-0.5 mt-0.5"
-              />
+              <div>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full bg-transparent font-mono text-xs text-ink-primary border-b border-transparent hover:border-bone focus:border-ink-primary focus:outline-none px-0 py-0.5 mt-0.5"
+                />
+                <div className="flex flex-wrap items-center gap-1 mt-1">
+                  {[5, 10, 15, 30, 60].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => {
+                        setActiveTermsDays(d);
+                        setDueDate(addDaysToDateString(issueDate, d));
+                      }}
+                      className={`px-1.5 py-0.2 text-[9px] font-mono rounded-[1px] border transition-colors ${
+                        activeTermsDays === d
+                          ? 'bg-ink-primary text-paper border-ink-primary font-bold'
+                          : 'bg-paper-dark/60 text-ink-secondary border-bone hover:border-ink-primary'
+                      }`}
+                    >
+                      {d}d
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 

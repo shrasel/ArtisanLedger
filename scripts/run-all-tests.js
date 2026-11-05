@@ -55,6 +55,11 @@ try {
     "ALTER TABLE organizations ADD COLUMN test_recipient_email TEXT DEFAULT 'shahjahan.rasell@gmail.com';"
   );
 } catch {}
+try {
+  db.exec(
+    'ALTER TABLE organizations ADD COLUMN default_custom_terms_days INTEGER DEFAULT 14;'
+  );
+} catch {}
 
 const orgCols = db.prepare('PRAGMA table_info(organizations)').all().map((c) => c.name);
 assert.ok(
@@ -66,8 +71,16 @@ assert.ok(
     orgCols.includes('principal_name') &&
     orgCols.includes('letterhead_title') &&
     orgCols.includes('letterhead_tagline') &&
-    orgCols.includes('test_recipient_email'),
-  'organizations table must have Firm Entity, Letterhead, and Test Email columns'
+    orgCols.includes('test_recipient_email') &&
+    orgCols.includes('default_custom_terms_days'),
+  'organizations table must have Firm Entity, Letterhead, Test Email, and Custom Terms Days columns'
+);
+const utilsSrc = fs.readFileSync(path.join(rootDir, 'src/lib/utils.ts'), 'utf8');
+assert.ok(
+  utilsSrc.includes('export function formatInvoiceNumber') &&
+    utilsSrc.includes('export function resolveTermsDays') &&
+    utilsSrc.includes('export function addDaysToDateString'),
+  'utils.ts must implement formatInvoiceNumber, resolveTermsDays, and addDaysToDateString'
 );
 console.log('  ✓ Passed: WAL mode active, FKs enforced, and all schema tables/columns verified.\n');
 

@@ -5,7 +5,12 @@ import { InvoicePaperSheet } from '@/components/invoice/InvoicePaperSheet';
 import { InvoiceCopilotBar } from '@/components/agent/InvoiceCopilotBar';
 import type { Organization, Client } from '@/db/schema';
 import type { EditableItem } from '@/components/invoice/LineItemEditor';
-import { getRelativeDateString } from '@/lib/utils';
+import {
+  getRelativeDateString,
+  addDaysToDateString,
+  resolveTermsDays,
+  formatInvoiceNumber,
+} from '@/lib/utils';
 
 interface NewInvoiceClientViewProps {
   organization: Organization;
@@ -28,6 +33,12 @@ export function NewInvoiceClientView({
     initialClients[0]?.id ||
     '';
 
+  const todayStr = getRelativeDateString(0);
+  const defaultTermsDays = resolveTermsDays(
+    organization.defaultTerms,
+    organization.defaultCustomTermsDays
+  );
+
   const [initialDraft, setInitialDraft] = useState<{
     invoiceNumber?: string;
     clientId?: string;
@@ -36,10 +47,14 @@ export function NewInvoiceClientView({
     currency?: string;
     notes?: string;
   }>({
-    invoiceNumber: `${organization.invoicePrefix || 'INV-'}${organization.nextInvoiceNumber || 1001}`,
+    invoiceNumber: formatInvoiceNumber(
+      organization.invoicePrefix,
+      organization.nextInvoiceNumber,
+      todayStr
+    ),
     clientId: defaultSelectedClientId,
-    issueDate: getRelativeDateString(0),
-    dueDate: getRelativeDateString(30),
+    issueDate: todayStr,
+    dueDate: addDaysToDateString(todayStr, defaultTermsDays),
     currency: organization.defaultCurrency || 'USD',
   });
 
@@ -99,8 +114,11 @@ export function NewInvoiceClientView({
       }
     }
 
-    const calculatedDueDate = getRelativeDateString(
-      typeof draft.dueDateOffsetDays === 'number' ? draft.dueDateOffsetDays : 30
+    const calculatedDueDate = addDaysToDateString(
+      initialDraft.issueDate || todayStr,
+      typeof draft.dueDateOffsetDays === 'number'
+        ? draft.dueDateOffsetDays
+        : defaultTermsDays
     );
 
     setInitialDraft((prev) => ({

@@ -37,7 +37,8 @@ export const organizations = sqliteTable('organizations', {
 
   // Invoice Defaults
   defaultCurrency: text('default_currency').default('USD'),
-  defaultTerms: text('default_terms').default('NET_30'), // DUE_ON_RECEIPT, NET_15, NET_30
+  defaultTerms: text('default_terms').default('NET_30'), // DUE_ON_RECEIPT, NET_5, NET_10, NET_15, NET_30, NET_60, CUSTOM
+  defaultCustomTermsDays: integer('default_custom_terms_days').default(14),
   defaultClientId: text('default_client_id'),
   invoicePrefix: text('invoice_prefix').default('INV-'),
   nextInvoiceNumber: integer('next_invoice_number').default(1001),

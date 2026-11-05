@@ -65,6 +65,7 @@ try {
         payment_notes TEXT,
         default_currency TEXT DEFAULT 'USD',
         default_terms TEXT DEFAULT 'NET_30',
+        default_custom_terms_days INTEGER DEFAULT 14,
         default_client_id TEXT,
         invoice_prefix TEXT DEFAULT 'INV-',
         next_invoice_number INTEGER DEFAULT 1001,
@@ -155,6 +156,11 @@ try {
   try {
     sqlite.exec(
       "ALTER TABLE organizations ADD COLUMN test_recipient_email TEXT DEFAULT 'shahjahan.rasell@gmail.com';"
+    );
+  } catch {}
+  try {
+    sqlite.exec(
+      'ALTER TABLE organizations ADD COLUMN default_custom_terms_days INTEGER DEFAULT 14;'
     );
   } catch {}
 } catch (err: any) {

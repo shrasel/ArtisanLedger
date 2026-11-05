@@ -34,6 +34,10 @@ export async function POST(req: NextRequest) {
         country: body.country || 'US',
         defaultCurrency: body.defaultCurrency || 'USD',
         defaultTerms: body.defaultTerms || 'NET_30',
+        defaultCustomTermsDays:
+          body.defaultCustomTermsDays !== undefined
+            ? Math.max(0, parseInt(body.defaultCustomTermsDays, 10) || 0)
+            : session.organization.defaultCustomTermsDays ?? 14,
         defaultClientId: body.defaultClientId || null,
         invoicePrefix: body.invoicePrefix || 'INV-',
         nextInvoiceNumber: parseInt(body.nextInvoiceNumber, 10) || 1001,
