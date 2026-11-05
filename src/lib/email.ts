@@ -1,4 +1,6 @@
 import { Resend } from 'resend';
+import type { InvoiceItem, Organization, Client } from '@/db/schema';
+import { formatCentsToCurrency, formatBasisPointsToPercent } from './utils';
 
 export interface SendInvoiceEmailOptions {
   recipientEmail: string | string[];
@@ -8,8 +10,21 @@ export interface SendInvoiceEmailOptions {
   senderName: string;
   companyName: string;
   invoiceNumber: string;
+  issueDateFormatted?: string;
   totalFormatted: string;
   dueDateFormatted: string;
+  currency?: string;
+  subtotalCents?: number;
+  discountCents?: number;
+  taxRateBasisPoints?: number;
+  taxAmountCents?: number;
+  totalCents?: number;
+  notes?: string | null;
+  termsConditions?: string | null;
+  items?: InvoiceItem[];
+  organization?: Organization;
+  client?: Client;
+  pdfBuffer?: Buffer;
   passcode: string;
   viewUrl: string;
   customSubject?: string;
@@ -44,8 +59,20 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
     senderName,
     companyName,
     invoiceNumber,
+    issueDateFormatted,
     totalFormatted,
     dueDateFormatted,
+    currency = 'USD',
+    subtotalCents = 0,
+    discountCents = 0,
+    taxRateBasisPoints = 0,
+    taxAmountCents = 0,
+    notes,
+    termsConditions,
+    items = [],
+    organization,
+    client,
+    pdfBuffer,
     passcode,
     viewUrl,
     customSubject,
@@ -73,6 +100,181 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
     process.env.EMAIL_FROM ||
     "The Architect's Ledger <onboarding@resend.dev>";
 
+  // Build From / Billed to HTML block if organization & client are provided
+  const fromName =
+    organization?.entityType === 'INDIVIDUAL'
+      ? organization.principalName || organization.companyName
+      : organization?.companyName || organization?.principalName || companyName || senderName;
+
+  const partyBlockHtml =
+    organization && client
+      ? `
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; border-top: 1px solid #E6E1D9; border-bottom: 1px solid #E6E1D9; padding: 14px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
+        <tr>
+          <td style="width: 50%; vertical-align: top; padding: 14px 12px 14px 0;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #5C5E62; font-weight: 700; margin-bottom: 4px;">From</div>
+            <div style="font-family: Georgia, serif; font-size: 14px; font-weight: 700; color: #18191B; margin-bottom: 2px;">${escapeHtml(fromName || '')}</div>
+            ${organization.addressLine ? `<div style="color: #5C5E62;">${escapeHtml(organization.addressLine)}</div>` : ''}
+            ${
+              [organization.city, organization.state, organization.postalCode].filter(Boolean).length > 0
+                ? `<div style="color: #5C5E62;">${escapeHtml(
+                    [organization.city, organization.state, organization.postalCode]
+                      .filter(Boolean)
+                      .join(', ')
+                  )}</div>`
+                : ''
+            }
+            ${organization.email ? `<div style="color: #5C5E62;">${escapeHtml(organization.email)}</div>` : ''}
+            ${organization.phone ? `<div style="color: #5C5E62;">${escapeHtml(organization.phone)}</div>` : ''}
+          </td>
+          <td style="width: 50%; vertical-align: top; padding: 14px 0 14px 12px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #5C5E62; font-weight: 700; margin-bottom: 4px;">Billed to</div>
+            <div style="font-family: Georgia, serif; font-size: 14px; font-weight: 700; color: #18191B; margin-bottom: 2px;">${escapeHtml(client.companyName || client.name)}</div>
+            ${client.companyName ? `<div style="color: #5C5E62;">Attn: ${escapeHtml(client.name)}</div>` : ''}
+            ${client.address ? `<div style="color: #5C5E62;">${escapeHtml(client.address)}</div>` : ''}
+            ${client.email ? `<div style="color: #5C5E62;">${escapeHtml(client.email)}</div>` : ''}
+          </td>
+        </tr>
+      </table>`
+      : '';
+
+  // Build Line Items Table HTML if items are provided
+  const lineItemsHtml =
+    items.length > 0
+      ? `
+      <div style="margin: 24px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #5C5E62; font-weight: 700; margin-bottom: 8px;">Line Items &amp; Deliverables</div>
+        <table style="width: 100%; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px;">
+          <thead>
+            <tr style="border-bottom: 1.5px solid #18191B;">
+              <th style="text-align: left; padding: 8px 4px; font-size: 10px; text-transform: uppercase; color: #5C5E62;">Description</th>
+              <th style="text-align: center; padding: 8px 4px; font-size: 10px; text-transform: uppercase; color: #5C5E62;">Qty</th>
+              <th style="text-align: right; padding: 8px 4px; font-size: 10px; text-transform: uppercase; color: #5C5E62;">Rate</th>
+              <th style="text-align: right; padding: 8px 4px; font-size: 10px; text-transform: uppercase; color: #5C5E62;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items
+              .map(
+                (item) => `
+              <tr style="border-bottom: 1px solid #E6E1D9;">
+                <td style="padding: 9px 4px; color: #18191B;">${escapeHtml(item.description || '—')}</td>
+                <td style="padding: 9px 4px; text-align: center; font-family: 'Courier New', Courier, monospace; color: #18191B;">${item.quantity}</td>
+                <td style="padding: 9px 4px; text-align: right; font-family: 'Courier New', Courier, monospace; color: #18191B;">${escapeHtml(
+                  formatCentsToCurrency(item.unitPriceCents, currency)
+                )}</td>
+                <td style="padding: 9px 4px; text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; color: #18191B;">${escapeHtml(
+                  formatCentsToCurrency(item.totalCents, currency)
+                )}</td>
+              </tr>`
+              )
+              .join('')}
+          </tbody>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px;">
+          <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 25%; padding: 4px 0; color: #5C5E62; text-transform: uppercase; font-size: 11px;">Subtotal</td>
+            <td style="width: 25%; padding: 4px 0; text-align: right; font-family: 'Courier New', Courier, monospace; color: #18191B;">${escapeHtml(
+              formatCentsToCurrency(subtotalCents, currency)
+            )}</td>
+          </tr>
+          ${
+            discountCents > 0
+              ? `<tr>
+                  <td></td>
+                  <td style="padding: 4px 0; color: #5C5E62; text-transform: uppercase; font-size: 11px;">Discount</td>
+                  <td style="padding: 4px 0; text-align: right; font-family: 'Courier New', Courier, monospace; color: #C84630;">-${escapeHtml(
+                    formatCentsToCurrency(discountCents, currency)
+                  )}</td>
+                </tr>`
+              : ''
+          }
+          ${
+            taxRateBasisPoints > 0
+              ? `<tr>
+                  <td></td>
+                  <td style="padding: 4px 0; color: #5C5E62; text-transform: uppercase; font-size: 11px;">Tax (${escapeHtml(
+                    formatBasisPointsToPercent(taxRateBasisPoints)
+                  )})</td>
+                  <td style="padding: 4px 0; text-align: right; font-family: 'Courier New', Courier, monospace; color: #18191B;">${escapeHtml(
+                    formatCentsToCurrency(taxAmountCents, currency)
+                  )}</td>
+                </tr>`
+              : ''
+          }
+          <tr>
+            <td></td>
+            <td style="padding: 8px 0; border-top: 1.5px solid #18191B; border-bottom: 2px solid #18191B; font-family: Georgia, serif; font-weight: 700; text-transform: uppercase; font-size: 12px; color: #18191B;">Balance Due</td>
+            <td style="padding: 8px 0; border-top: 1.5px solid #18191B; border-bottom: 2px solid #18191B; text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 15px; color: #18191B;">${escapeHtml(
+              totalFormatted
+            )}</td>
+          </tr>
+        </table>
+      </div>`
+      : '';
+
+  const notesAndTermsHtml =
+    notes || termsConditions
+      ? `
+      <div style="margin: 20px 0; padding: 12px 14px; background-color: #F3EFEA; border-left: 3px solid #5C5E62; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
+        ${
+          notes
+            ? `<div style="margin-bottom: ${termsConditions ? '10px' : '0'};">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #5C5E62; font-weight: 700; margin-bottom: 3px;">Notes &amp; Instructions</div>
+                <div style="color: #18191B; line-height: 1.5;">${escapeHtml(notes)}</div>
+              </div>`
+            : ''
+        }
+        ${
+          termsConditions
+            ? `<div>
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #5C5E62; font-weight: 700; margin-bottom: 3px;">Terms &amp; Conditions</div>
+                <div style="color: #18191B; line-height: 1.5;">${escapeHtml(termsConditions)}</div>
+              </div>`
+            : ''
+        }
+      </div>`
+      : '';
+
+  const wireRemittanceHtml = organization
+    ? `
+      <div style="margin: 24px 0 12px; padding: 14px; border: 1px solid #E6E1D9; background-color: #F3EFEA; border-radius: 2px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #5C5E62; font-weight: 700; margin-bottom: 8px;">Wire Transfer / Remittance Instructions</div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 4px 0; width: 50%;">
+              <span style="font-size: 10px; text-transform: uppercase; color: #5C5E62; display: block;">Beneficiary Bank</span>
+              <strong style="font-family: 'Courier New', Courier, monospace; color: #18191B;">${escapeHtml(
+                organization.bankName || 'Direct Wire Transfer'
+              )}</strong>
+            </td>
+            <td style="padding: 4px 0; width: 50%;">
+              <span style="font-size: 10px; text-transform: uppercase; color: #5C5E62; display: block;">Account Holder</span>
+              <strong style="font-family: 'Courier New', Courier, monospace; color: #18191B;">${escapeHtml(
+                organization.accountHolderName || organization.companyName || ''
+              )}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0;">
+              <span style="font-size: 10px; text-transform: uppercase; color: #5C5E62; display: block;">Routing / ABA</span>
+              <strong style="font-family: 'Courier New', Courier, monospace; color: #18191B;">${escapeHtml(
+                organization.routingNumber || '—'
+              )}</strong>
+            </td>
+            <td style="padding: 4px 0;">
+              <span style="font-size: 10px; text-transform: uppercase; color: #5C5E62; display: block;">Account Number</span>
+              <strong style="font-family: 'Courier New', Courier, monospace; color: #18191B;">${escapeHtml(
+                organization.accountNumber || '—'
+              )}</strong>
+            </td>
+          </tr>
+        </table>
+      </div>`
+    : '';
+
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -88,7 +290,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       color: #18191B;
     }
     .wrapper {
-      max-width: 580px;
+      max-width: 640px;
       margin: 0 auto;
       background-color: #FAF8F5;
       border: 1px solid #E6E1D9;
@@ -97,22 +299,26 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       overflow: hidden;
     }
     .header {
-      padding: 36px 36px 24px;
-      border-bottom: 2px solid #18191B;
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
+      padding: 36px 36px 20px;
     }
     .header h1 {
       margin: 0;
-      font-size: 22px;
+      font-size: 24px;
       letter-spacing: -0.02em;
       text-transform: uppercase;
       font-weight: 700;
       color: #18191B;
     }
+    .header p {
+      margin: 4px 0 0;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #5C5E62;
+    }
     .content {
-      padding: 36px;
+      padding: 0 36px 36px;
     }
     .greeting {
       font-size: 15px;
@@ -123,12 +329,14 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
     .metadata-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 24px 0;
+      margin: 20px 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 14px;
+      background-color: #F3EFEA;
+      border: 1px solid #E6E1D9;
     }
     .metadata-table td {
-      padding: 10px 0;
+      padding: 10px 14px;
       border-bottom: 1px solid #E6E1D9;
     }
     .metadata-table td.label {
@@ -142,7 +350,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       font-weight: 600;
       color: #18191B;
       font-family: 'Courier New', Courier, monospace;
-      font-size: 15px;
+      font-size: 14px;
     }
     .pin-box {
       background-color: #ECE6DC;
@@ -199,26 +407,45 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   <div class="wrapper">
     <div class="header">
       <h1>${escapeHtml(companyName || senderName || "The Architect's Ledger")}</h1>
+      ${
+        organization?.letterheadTagline
+          ? `<p>${escapeHtml(organization.letterheadTagline)}</p>`
+          : ''
+      }
     </div>
     <div class="content">
       <div class="greeting">
         ${greetingHtml}
       </div>
 
+      ${partyBlockHtml}
+
       <table class="metadata-table">
         <tr>
-          <td class="label">Invoice Reference</td>
+          <td class="label">Invoice No.</td>
           <td class="val">${escapeHtml(invoiceNumber)}</td>
         </tr>
+        ${
+          issueDateFormatted
+            ? `<tr>
+                <td class="label">Issue Date</td>
+                <td class="val">${escapeHtml(issueDateFormatted)}</td>
+              </tr>`
+            : ''
+        }
         <tr>
-          <td class="label">Total Amount Due</td>
-          <td class="val">${escapeHtml(totalFormatted)}</td>
-        </tr>
-        <tr>
-          <td class="label">Payment Due Date</td>
+          <td class="label">Due Date</td>
           <td class="val">${escapeHtml(dueDateFormatted)}</td>
         </tr>
+        <tr>
+          <td class="label">Total Balance Due</td>
+          <td class="val">${escapeHtml(totalFormatted)}</td>
+        </tr>
       </table>
+
+      ${lineItemsHtml}
+      ${notesAndTermsHtml}
+      ${wireRemittanceHtml}
 
       <div class="pin-box">
         <div class="pin-label">Secure Access Verification Code (PIN)</div>
@@ -231,7 +458,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
     </div>
     <div class="footer">
       This is a secure archival document dispatch issued via The Architect's Ledger.<br>
-      Please do not share your verification PIN with unauthorized third parties.
+      An official US Letter PDF copy of Invoice ${escapeHtml(invoiceNumber)} is attached to this email.
     </div>
   </div>
 </body>
@@ -248,6 +475,16 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
         ...(bccList.length > 0 ? { bcc: bccList } : {}),
         subject: subjectLine,
         html: htmlContent,
+        ...(pdfBuffer
+          ? {
+              attachments: [
+                {
+                  filename: `Invoice-${invoiceNumber}.pdf`,
+                  content: pdfBuffer,
+                },
+              ],
+            }
+          : {}),
       });
       if (result.error) {
         console.error('Resend API returned error:', result.error);

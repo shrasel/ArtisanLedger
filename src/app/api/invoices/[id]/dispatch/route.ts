@@ -1,6 +1,8 @@
+import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
+import { renderToBuffer } from '@react-pdf/renderer';
 import { db } from '@/db';
-import { invoices, clients } from '@/db/schema';
+import { invoices, invoiceItems, clients } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import {
@@ -11,6 +13,7 @@ import {
   formatEditorialDate,
 } from '@/lib/utils';
 import { sendInvoiceEmail } from '@/lib/email';
+import { InvoicePdfTemplate } from '@/lib/pdf/InvoicePdfTemplate';
 
 export async function POST(
   req: NextRequest,
@@ -67,6 +70,13 @@ export async function POST(
       return NextResponse.json({ error: 'Client record not found' }, { status: 400 });
     }
 
+    // Fetch line items for complete email breakdown & PDF attachment
+    const items = await db
+      .select()
+      .from(invoiceItems)
+      .where(eq(invoiceItems.invoiceId, invoice.id))
+      .orderBy(invoiceItems.sortOrder);
+
     const toRecipients =
       Array.isArray(customBody.to) && customBody.to.filter((e) => e?.trim()).length > 0
         ? customBody.to.map((e) => e.trim()).filter(Boolean)
@@ -96,8 +106,24 @@ export async function POST(
       })
       .where(eq(invoices.id, id));
 
+    // Render US Letter PDF buffer to attach directly to the dispatched email
+    let pdfBuffer: Buffer | undefined;
+    try {
+      const updatedInvoice = { ...invoice, status: 'SENT' as const, accessToken };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfDocument = React.createElement(InvoicePdfTemplate, {
+        invoice: updatedInvoice,
+        items,
+        organization: session.organization,
+        client,
+      }) as unknown as React.ReactElement<any>;
+      pdfBuffer = await renderToBuffer(pdfDocument);
+    } catch (pdfErr) {
+      console.error('Warning: Failed to render PDF attachment for email:', pdfErr);
+    }
+
     // Construct view URL
-    const host = req.headers.get('host') || 'localhost:3000';
+    const host = req.headers.get('host') || 'localhost:3005';
     const protocol = host.includes('localhost') ? 'http' : 'https';
     const viewUrl = `${protocol}://${host}/view/${accessToken}`;
 
@@ -107,7 +133,7 @@ export async function POST(
       session.organization.principalName ||
       "The Architect's Ledger";
 
-    // Dispatch email
+    // Dispatch email with complete invoice details + PDF attachment
     const emailRes = await sendInvoiceEmail({
       recipientEmail: toRecipients,
       ccEmails: ccRecipients,
@@ -116,8 +142,21 @@ export async function POST(
       senderName: session.organization.principalName || session.organization.companyName,
       companyName: senderDisplayName,
       invoiceNumber: invoice.invoiceNumber,
+      issueDateFormatted: formatEditorialDate(invoice.issueDate),
       totalFormatted: formatCentsToCurrency(invoice.totalCents, invoice.currency || 'USD'),
       dueDateFormatted: formatEditorialDate(invoice.dueDate),
+      currency: invoice.currency || 'USD',
+      subtotalCents: invoice.subtotalCents || 0,
+      discountCents: invoice.discountCents || 0,
+      taxRateBasisPoints: invoice.taxRateBasisPoints || 0,
+      taxAmountCents: invoice.taxAmountCents || 0,
+      totalCents: invoice.totalCents || 0,
+      notes: invoice.notes,
+      termsConditions: invoice.termsConditions,
+      items,
+      organization: session.organization,
+      client,
+      pdfBuffer,
       passcode: rawPin,
       viewUrl,
       customSubject: customBody.subject,

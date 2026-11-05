@@ -882,32 +882,109 @@ export function DispatchInvoiceModal({
                         {customMessage}
                       </div>
 
+                      {/* From & Billed to Party Block */}
+                      <div className="grid grid-cols-2 gap-4 py-3.5 my-4 border-y border-[#E6E1D9] text-xs font-sans">
+                        <div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-[#5C5E62] mb-1">
+                            From
+                          </div>
+                          <div className="font-serif font-bold text-[#18191B]">
+                            {organization.entityType === 'INDIVIDUAL'
+                              ? organization.principalName || organization.companyName
+                              : organization.companyName || organization.principalName}
+                          </div>
+                          {organization.email && (
+                            <div className="text-[#5C5E62]">{organization.email}</div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-[#5C5E62] mb-1">
+                            Billed to
+                          </div>
+                          <div className="font-serif font-bold text-[#18191B]">
+                            {client?.companyName || client?.name || '—'}
+                          </div>
+                          {client?.email && <div className="text-[#5C5E62]">{client.email}</div>}
+                        </div>
+                      </div>
+
                       {/* Anchored Metadata Table */}
-                      <div className="border-t border-[#E6E1D9] my-6 text-xs font-sans">
-                        <div className="flex justify-between py-2.5 border-b border-[#E6E1D9]">
+                      <div className="bg-[#F3EFEA] border border-[#E6E1D9] my-5 text-xs font-sans">
+                        <div className="flex justify-between px-3.5 py-2 border-b border-[#E6E1D9]">
                           <span className="uppercase text-[11px] tracking-wider text-[#5C5E62]">
-                            Invoice Reference
+                            Invoice No.
                           </span>
                           <span className="font-mono font-bold text-sm text-[#18191B]">
                             {invoiceNumber}
                           </span>
                         </div>
-                        <div className="flex justify-between py-2.5 border-b border-[#E6E1D9]">
+                        <div className="flex justify-between px-3.5 py-2 border-b border-[#E6E1D9]">
                           <span className="uppercase text-[11px] tracking-wider text-[#5C5E62]">
-                            Total Amount Due
+                            Issue Date
                           </span>
                           <span className="font-mono font-bold text-sm text-[#18191B]">
-                            {totalFormatted}
+                            {issueDateFormatted}
                           </span>
                         </div>
-                        <div className="flex justify-between py-2.5 border-b border-[#E6E1D9]">
+                        <div className="flex justify-between px-3.5 py-2 border-b border-[#E6E1D9]">
                           <span className="uppercase text-[11px] tracking-wider text-[#5C5E62]">
-                            Payment Due Date
+                            Due Date
                           </span>
                           <span className="font-mono font-bold text-sm text-[#18191B]">
                             {dueDateFormatted}
                           </span>
                         </div>
+                        <div className="flex justify-between px-3.5 py-2">
+                          <span className="uppercase text-[11px] tracking-wider text-[#5C5E62]">
+                            Total Balance Due
+                          </span>
+                          <span className="font-mono font-bold text-sm text-[#18191B]">
+                            {totalFormatted}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Line Items Breakdown inside Email */}
+                      <div className="my-5 text-xs font-sans">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#5C5E62] mb-2">
+                          Line Items &amp; Deliverables
+                        </div>
+                        <div className="grid grid-cols-12 border-b border-[#18191B] pb-1.5 mb-1.5 text-[10px] font-bold uppercase text-[#5C5E62]">
+                          <div className="col-span-6">Description</div>
+                          <div className="col-span-2 text-center">Qty</div>
+                          <div className="col-span-2 text-right">Rate</div>
+                          <div className="col-span-2 text-right">Amount</div>
+                        </div>
+                        {items.map((item, idx) => (
+                          <div
+                            key={item.id || idx}
+                            className="grid grid-cols-12 py-1.5 border-b border-[#E6E1D9] text-xs"
+                          >
+                            <div className="col-span-6 pr-2 text-[#18191B]">
+                              {item.description || '—'}
+                            </div>
+                            <div className="col-span-2 text-center font-mono">
+                              {item.quantity}
+                            </div>
+                            <div className="col-span-2 text-right font-mono">
+                              {formatCentsToCurrency(item.unitPriceCents, currency)}
+                            </div>
+                            <div className="col-span-2 text-right font-mono font-bold">
+                              {formatCentsToCurrency(
+                                Math.round(item.quantity * item.unitPriceCents),
+                                currency
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Attached PDF Badge */}
+                      <div className="p-2.5 bg-[#F3EFEA] border border-[#E6E1D9] rounded-[2px] flex items-center justify-between text-xs font-mono my-4">
+                        <span className="text-[#5C5E62]">📎 Attached Official US Letter PDF:</span>
+                        <span className="font-bold text-[#18191B]">
+                          Invoice-{invoiceNumber}.pdf
+                        </span>
                       </div>
 
                       {/* Anchored PIN Box */}
