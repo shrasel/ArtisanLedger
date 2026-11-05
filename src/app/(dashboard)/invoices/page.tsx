@@ -5,6 +5,7 @@ import { invoices, clients, type Invoice } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { StatusStamp } from '@/components/invoice/StatusStamp';
+import { DeleteInvoiceButton } from '@/components/invoice/DeleteInvoiceButton';
 import { formatCentsToCurrency, formatEditorialDate } from '@/lib/utils';
 import { Plus, Download, ExternalLink, ArrowUpRight, FileSpreadsheet } from 'lucide-react';
 
@@ -247,6 +248,11 @@ export default async function InvoicesListPage({
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
+
+                        <DeleteInvoiceButton
+                          invoiceId={invoice.id}
+                          invoiceNumber={invoice.invoiceNumber}
+                        />
                       </div>
                     </td>
                   </tr>

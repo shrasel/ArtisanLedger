@@ -14,6 +14,7 @@ import {
   Calendar,
   AlertCircle,
   FileText,
+  Trash2,
 } from 'lucide-react';
 import { StatusStamp } from './StatusStamp';
 import { LineItemEditor, type EditableItem } from './LineItemEditor';
@@ -115,6 +116,7 @@ export function InvoicePaperSheet({
     emailStatus: string;
   } | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Calculated Totals
   const totals = calculateInvoiceTotals(items, taxRateBasisPoints, discountCents);
@@ -294,6 +296,28 @@ export function InvoicePaperSheet({
     }
   };
 
+  // Delete Invoice
+  const handleDeleteInvoice = async () => {
+    if (!invoiceId) return;
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/invoices/${invoiceId}/delete`, {
+          method: 'POST',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to delete invoice');
+        }
+        router.push('/invoices');
+        router.refresh();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error deleting invoice';
+        setFeedbackMessage({ type: 'error', text: message });
+        setShowDeleteConfirm(false);
+      }
+    });
+  };
+
   const pdfDownloadUrl = invoiceId
     ? `/api/invoices/${invoiceId}/pdf${initialInvoice?.accessToken ? `?token=${initialInvoice.accessToken}` : ''}`
     : null;
@@ -311,6 +335,18 @@ export function InvoicePaperSheet({
           </div>
 
           <div className="flex items-center gap-2">
+            {invoiceId && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-status-vermilion hover:bg-status-vermilion/10 border border-status-vermilion/40 rounded-[2px] transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
+            )}
+
             {invoiceId && pdfDownloadUrl && (
               <a
                 href={pdfDownloadUrl}
@@ -980,6 +1016,52 @@ export function InvoicePaperSheet({
                 className="px-5 py-2 text-xs font-mono uppercase tracking-wider text-paper bg-ink-primary hover:bg-black rounded-[1px] font-bold transition-colors"
               >
                 Close & Return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE INVOICE CONFIRMATION MODAL */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md bg-paper text-ink-primary border border-bone shadow-sheet rounded-[2px] p-6 relative">
+            <div className="border-b border-bone pb-3 mb-4">
+              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-status-vermilion block">
+                ARCHIVAL EXPUNGEMENT
+              </span>
+              <h3 className="font-serif text-xl font-bold text-ink-primary">
+                Delete Invoice {invoiceNumber}?
+              </h3>
+            </div>
+
+            <p className="text-xs font-sans text-ink-secondary leading-relaxed mb-6">
+              This will permanently remove invoice{' '}
+              <span className="font-mono font-bold text-ink-primary">{invoiceNumber}</span> and
+              all associated line items from your ledger. This action cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-bone">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isPending}
+                className="px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider text-ink-secondary hover:text-ink-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteInvoice}
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono uppercase tracking-wider bg-status-vermilion text-paper hover:opacity-90 rounded-[1px] font-bold transition-all shadow-sm"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isPending ? 'Deleting...' : 'Delete Permanently'}</span>
               </button>
             </div>
           </div>

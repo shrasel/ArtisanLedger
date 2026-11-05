@@ -15,6 +15,8 @@ import {
   Check,
   Loader2,
   X,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import type { Client } from '@/db/schema';
 
@@ -52,6 +54,8 @@ export function ClientsManagerView({
 
   const [loading, setLoading] = useState(false);
   const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+  const [deletingClient, setDeletingClient] = useState<Client | null>(null);
+  const [cascadeInvoiceCount, setCascadeInvoiceCount] = useState<number>(0);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Close modals on Escape key
@@ -60,6 +64,8 @@ export function ClientsManagerView({
       if (e.key === 'Escape') {
         setShowAddModal(false);
         setEditingClient(null);
+        setDeletingClient(null);
+        setCascadeInvoiceCount(0);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -211,6 +217,42 @@ export function ClientsManagerView({
     }
   };
 
+  // Delete Client
+  const handleDeleteClient = async (cascade = false) => {
+    if (!deletingClient) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/clients/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: deletingClient.id, cascade }),
+      });
+
+      const data = await res.json();
+      if (res.status === 409 && data.requiresCascade) {
+        setCascadeInvoiceCount(data.invoiceCount || 1);
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) throw new Error(data.error || 'Failed to delete client');
+
+      const deletedName = deletingClient.companyName || deletingClient.name;
+      setClientsList((prev) => prev.filter((c) => c.id !== deletingClient.id));
+      if (defaultClientId === deletingClient.id) {
+        setDefaultClientId(null);
+      }
+      setDeletingClient(null);
+      setCascadeInvoiceCount(0);
+      showFeedback(`Client "${deletedName}" removed from the registry.`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error deleting client';
+      showFeedback(msg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -325,6 +367,19 @@ export function ClientsManagerView({
                         className="p-1.5 rounded-[1px] bg-obsidian border border-obsidian-border text-ink-ghost hover:text-paper hover:border-bone/60 transition-colors"
                       >
                         <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeletingClient(client);
+                          setCascadeInvoiceCount(0);
+                        }}
+                        title="Delete Client"
+                        aria-label={`Delete client ${client.companyName || client.name}`}
+                        className="p-1.5 rounded-[1px] bg-obsidian border border-obsidian-border text-ink-ghost hover:text-status-vermilion hover:border-status-vermilion/60 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
 
                       <span className="p-1.5 rounded-[1px] bg-obsidian border border-obsidian-border text-status-brass">
@@ -688,6 +743,101 @@ export function ClientsManagerView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CLIENT CONFIRMATION MODAL */}
+      {deletingClient && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md bg-paper text-ink-primary border border-bone shadow-sheet rounded-[2px] p-6 relative animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between border-b border-bone pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-status-vermilion shrink-0" />
+                <div>
+                  <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-status-vermilion block">
+                    CLIENT REGISTRY &bull; EXPUNGEMENT
+                  </span>
+                  <h2 className="font-serif text-xl font-bold text-ink-primary">
+                    Delete Client Record?
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingClient(null);
+                  setCascadeInvoiceCount(0);
+                }}
+                className="p-1 text-ink-secondary hover:text-ink-primary transition-colors"
+                aria-label="Close dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {cascadeInvoiceCount > 0 ? (
+              <div className="mb-5 p-3 bg-status-vermilion/10 border border-status-vermilion rounded-[1px] text-xs font-sans text-ink-primary space-y-2">
+                <p className="font-mono font-bold text-status-vermilion uppercase text-[11px]">
+                  Warning: {cascadeInvoiceCount} Associated Invoice(s) Found
+                </p>
+                <p className="text-ink-secondary leading-relaxed">
+                  <strong className="text-ink-primary">
+                    {deletingClient.companyName || deletingClient.name}
+                  </strong>{' '}
+                  currently has {cascadeInvoiceCount} invoice(s) in your ledger. Proceeding will
+                  permanently delete both this client and their {cascadeInvoiceCount} invoice(s).
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs font-sans text-ink-secondary leading-relaxed mb-5">
+                Are you sure you want to permanently remove{' '}
+                <strong className="text-ink-primary">
+                  {deletingClient.companyName || deletingClient.name}
+                </strong>{' '}
+                ({deletingClient.email}) from your client registry?
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-bone">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingClient(null);
+                  setCascadeInvoiceCount(0);
+                }}
+                disabled={loading}
+                className="px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider text-ink-secondary hover:text-ink-primary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteClient(cascadeInvoiceCount > 0)}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono uppercase tracking-wider bg-status-vermilion text-paper hover:opacity-90 rounded-[1px] font-bold transition-all shadow-sm"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>
+                      {cascadeInvoiceCount > 0
+                        ? `Delete Client & ${cascadeInvoiceCount} Invoice(s)`
+                        : 'Delete Client'}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
