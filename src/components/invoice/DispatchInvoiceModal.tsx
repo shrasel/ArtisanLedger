@@ -85,6 +85,7 @@ export function DispatchInvoiceModal({
   const totalFormatted = formatCentsToCurrency(totals.totalCents, currency || 'USD');
   const dueDateFormatted = formatEditorialDate(dueDate);
   const issueDateFormatted = formatEditorialDate(issueDate);
+  const testEmail = organization.testRecipientEmail || 'shahjahan.rasell@gmail.com';
 
   const buildDefaultSubject = () => `Invoice ${invoiceNumber} from ${senderDisplayName}`;
 
@@ -311,13 +312,41 @@ export function DispatchInvoiceModal({
 
             {/* TO RECIPIENTS (Multi-chip input) */}
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
                 <label className="text-[10px] font-mono uppercase tracking-wider text-ink-secondary font-bold">
                   To (Primary Recipients) *
                 </label>
-                <span className="text-[10px] font-sans text-ink-ghost">
-                  Press Enter or comma to add multiple
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setToEmails([testEmail]);
+                      setToInput('');
+                      setValidationError(null);
+                    }}
+                    className={`px-2 py-0.5 text-[10px] font-mono rounded-[1px] border transition-colors ${
+                      toEmails.length === 1 && toEmails[0] === testEmail
+                        ? 'bg-status-hunter text-paper border-status-hunter font-bold'
+                        : 'bg-paper-dark text-ink-primary border-bone hover:border-ink-primary'
+                    }`}
+                    title={`Route test email exclusively to ${testEmail}`}
+                  >
+                    Use Test Email ({testEmail})
+                  </button>
+                  {client?.email && (toEmails.length !== 1 || toEmails[0] !== client.email) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setToEmails([client.email]);
+                        setToInput('');
+                        setValidationError(null);
+                      }}
+                      className="text-[10px] font-mono underline text-ink-secondary hover:text-ink-primary"
+                    >
+                      Restore Client
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="min-h-[40px] w-full bg-paper-dark border border-bone p-1.5 rounded-[1px] flex flex-wrap items-center gap-1.5 focus-within:border-ink-primary transition-colors">
                 {toEmails.map((email) => (
@@ -358,20 +387,31 @@ export function DispatchInvoiceModal({
 
             {/* CC RECIPIENTS (Multi-chip input) */}
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                 <label className="text-[10px] font-mono uppercase tracking-wider text-ink-secondary font-bold">
                   CC (Carbon Copy / Additional Recipients)
                 </label>
-                {!showBcc && (
-                  <button
-                    type="button"
-                    onClick={() => setShowBcc(true)}
-                    className="text-[10px] font-mono uppercase tracking-wider text-ink-secondary hover:text-ink-primary flex items-center gap-0.5"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Add BCC</span>
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {!ccEmails.includes(testEmail) && (
+                    <button
+                      type="button"
+                      onClick={() => setCcEmails((prev) => Array.from(new Set([...prev, testEmail])))}
+                      className="text-[10px] font-mono text-status-hunter hover:underline"
+                    >
+                      + CC {testEmail}
+                    </button>
+                  )}
+                  {!showBcc && (
+                    <button
+                      type="button"
+                      onClick={() => setShowBcc(true)}
+                      className="text-[10px] font-mono uppercase tracking-wider text-ink-secondary hover:text-ink-primary flex items-center gap-0.5"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add BCC</span>
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="min-h-[38px] w-full bg-paper-dark border border-bone p-1.5 rounded-[1px] flex flex-wrap items-center gap-1.5 focus-within:border-ink-primary transition-colors">
                 {ccEmails.map((email) => (
@@ -944,3 +984,4 @@ export function DispatchInvoiceModal({
     </div>
   );
 }
+

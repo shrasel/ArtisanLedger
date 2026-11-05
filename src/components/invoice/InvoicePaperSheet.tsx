@@ -266,9 +266,11 @@ export function InvoicePaperSheet({
             cc: emailPayload.cc,
             bcc: emailPayload.bcc,
           },
-          emailStatus: dispatchData.simulated
-            ? 'Simulated Dispatch (Check terminal or use PIN below)'
-            : 'Dispatched via Resend with tokenized link & PIN',
+          emailStatus: dispatchData.emailError
+            ? `Email Provider Notice: ${dispatchData.emailError} (Use Portal Link & PIN below)`
+            : dispatchData.simulated
+            ? 'Simulated Dispatch (Add Resend API Key in Settings for live Gmail inbox delivery, or use PIN below)'
+            : 'Live Email Dispatched via Resend with tokenized link & PIN',
         });
 
         if (!invoiceId && activeId) {

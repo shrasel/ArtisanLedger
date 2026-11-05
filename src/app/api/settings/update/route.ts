@@ -44,6 +44,15 @@ export async function POST(req: NextRequest) {
         accountNumber: body.accountNumber || null,
         swiftBic: body.swiftBic || null,
         paymentNotes: body.paymentNotes || null,
+        resendApiKey: body.resendApiKey !== undefined ? body.resendApiKey || null : session.organization.resendApiKey,
+        emailFrom:
+          body.emailFrom !== undefined
+            ? body.emailFrom || "The Architect's Ledger <onboarding@resend.dev>"
+            : session.organization.emailFrom,
+        testRecipientEmail:
+          body.testRecipientEmail !== undefined
+            ? body.testRecipientEmail || 'shahjahan.rasell@gmail.com'
+            : session.organization.testRecipientEmail,
       })
       .where(eq(organizations.id, session.organization.id));
 

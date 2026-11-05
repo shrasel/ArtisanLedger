@@ -144,6 +144,19 @@ try {
       "ALTER TABLE organizations ADD COLUMN letterhead_tagline TEXT DEFAULT 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER';"
     );
   } catch {}
+  try {
+    sqlite.exec('ALTER TABLE organizations ADD COLUMN resend_api_key TEXT;');
+  } catch {}
+  try {
+    sqlite.exec(
+      'ALTER TABLE organizations ADD COLUMN email_from TEXT DEFAULT "The Architect\'s Ledger <onboarding@resend.dev>";'
+    );
+  } catch {}
+  try {
+    sqlite.exec(
+      "ALTER TABLE organizations ADD COLUMN test_recipient_email TEXT DEFAULT 'shahjahan.rasell@gmail.com';"
+    );
+  } catch {}
 } catch (err: any) {
   if (err?.code !== 'SQLITE_BUSY') {
     console.error('Database init warning:', err);

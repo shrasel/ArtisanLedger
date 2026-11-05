@@ -14,6 +14,8 @@ export interface SendInvoiceEmailOptions {
   viewUrl: string;
   customSubject?: string;
   customMessage?: string;
+  resendApiKeyOverride?: string | null;
+  emailFromOverride?: string | null;
 }
 
 function escapeHtml(unsafe: string): string {
@@ -48,6 +50,8 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
     viewUrl,
     customSubject,
     customMessage,
+    resendApiKeyOverride,
+    emailFromOverride,
   } = options;
 
   const toList = Array.isArray(recipientEmail)
@@ -63,7 +67,11 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
     ? formatCustomMessageHtml(customMessage)
     : `Dear ${escapeHtml(recipientName || 'Valued Client')},<br><br>An invoice has been issued by <strong>${escapeHtml(companyName || senderName)}</strong>.`;
 
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const resendApiKey = resendApiKeyOverride?.trim() || process.env.RESEND_API_KEY;
+  const senderFrom =
+    emailFromOverride?.trim() ||
+    process.env.EMAIL_FROM ||
+    "The Architect's Ledger <onboarding@resend.dev>";
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -233,18 +241,30 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   if (resendApiKey) {
     try {
       const resend = new Resend(resendApiKey);
-      const data = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'Ledger <invoices@architectsledger.com>',
+      const result = await resend.emails.send({
+        from: senderFrom,
         to: toList,
         ...(ccList.length > 0 ? { cc: ccList } : {}),
         ...(bccList.length > 0 ? { bcc: bccList } : {}),
         subject: subjectLine,
         html: htmlContent,
       });
-      return { success: true, data, simulated: false };
+      if (result.error) {
+        console.error('Resend API returned error:', result.error);
+        return {
+          success: false,
+          error: result.error.message || JSON.stringify(result.error),
+          simulated: false,
+        };
+      }
+      return { success: true, data: result.data, simulated: false };
     } catch (error) {
       console.error('Failed to send email via Resend:', error);
-      return { success: false, error, simulated: false };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        simulated: false,
+      };
     }
   }
 

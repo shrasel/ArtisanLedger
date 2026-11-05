@@ -122,6 +122,8 @@ export async function POST(
       viewUrl,
       customSubject: customBody.subject,
       customMessage: customBody.customMessage,
+      resendApiKeyOverride: session.organization.resendApiKey,
+      emailFromOverride: session.organization.emailFrom,
     });
 
     return NextResponse.json({
@@ -135,6 +137,7 @@ export async function POST(
         bcc: bccRecipients,
       },
       simulated: emailRes.simulated || false,
+      emailError: emailRes.error || null,
     });
   } catch (err: unknown) {
     console.error('Dispatch invoice error:', err);

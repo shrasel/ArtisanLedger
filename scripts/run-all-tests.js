@@ -44,6 +44,17 @@ try {
     "ALTER TABLE organizations ADD COLUMN letterhead_tagline TEXT DEFAULT 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER';"
   );
 } catch {}
+try { db.exec('ALTER TABLE organizations ADD COLUMN resend_api_key TEXT;'); } catch {}
+try {
+  db.exec(
+    'ALTER TABLE organizations ADD COLUMN email_from TEXT DEFAULT "The Architect\'s Ledger <onboarding@resend.dev>";'
+  );
+} catch {}
+try {
+  db.exec(
+    "ALTER TABLE organizations ADD COLUMN test_recipient_email TEXT DEFAULT 'shahjahan.rasell@gmail.com';"
+  );
+} catch {}
 
 const orgCols = db.prepare('PRAGMA table_info(organizations)').all().map((c) => c.name);
 assert.ok(
@@ -54,8 +65,9 @@ assert.ok(
   orgCols.includes('entity_type') &&
     orgCols.includes('principal_name') &&
     orgCols.includes('letterhead_title') &&
-    orgCols.includes('letterhead_tagline'),
-  'organizations table must have Firm Entity & Letterhead columns (entity_type, principal_name, letterhead_title, letterhead_tagline)'
+    orgCols.includes('letterhead_tagline') &&
+    orgCols.includes('test_recipient_email'),
+  'organizations table must have Firm Entity, Letterhead, and Test Email columns'
 );
 console.log('  ✓ Passed: WAL mode active, FKs enforced, and all schema tables/columns verified.\n');
 
@@ -152,8 +164,14 @@ assert.ok(
 
 const emailLibSource = fs.readFileSync(path.join(rootDir, 'src', 'lib', 'email.ts'), 'utf8');
 assert.ok(
-  emailLibSource.includes('ccEmails') && emailLibSource.includes('customMessage'),
-  'src/lib/email.ts must accept ccEmails and customMessage'
+  emailLibSource.includes('ccEmails') &&
+    emailLibSource.includes('customMessage') &&
+    emailLibSource.includes('onboarding@resend.dev'),
+  'src/lib/email.ts must accept ccEmails, customMessage, and default to onboarding@resend.dev'
+);
+assert.ok(
+  dispatchModalSource.includes('shahjahan.rasell@gmail.com'),
+  'DispatchInvoiceModal must support one-click test email routing to shahjahan.rasell@gmail.com'
 );
 console.log('  ✓ Passed: Tokenized links, bcrypt PIN verification, and Pre-Dispatch Email Studio verified.\n');
 

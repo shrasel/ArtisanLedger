@@ -42,6 +42,11 @@ export const organizations = sqliteTable('organizations', {
   invoicePrefix: text('invoice_prefix').default('INV-'),
   nextInvoiceNumber: integer('next_invoice_number').default(1001),
   defaultTaxRateBasisPoints: integer('default_tax_rate_basis_points').default(0),
+
+  // Email Dispatch & Testing Configuration
+  resendApiKey: text('resend_api_key'),
+  emailFrom: text('email_from').default("The Architect's Ledger <onboarding@resend.dev>"),
+  testRecipientEmail: text('test_recipient_email').default('shahjahan.rasell@gmail.com'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),
 });
 
