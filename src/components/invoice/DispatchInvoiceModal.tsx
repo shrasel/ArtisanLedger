@@ -69,6 +69,11 @@ export function DispatchInvoiceModal({
   organization,
   client,
 }: DispatchInvoiceModalProps) {
+  const senderEntityName =
+    organization.entityType === 'INDIVIDUAL'
+      ? organization.principalName || organization.companyName || "The Architect's Ledger"
+      : organization.companyName || organization.principalName || "The Architect's Ledger";
+
   const senderDisplayName =
     organization.letterheadTitle ||
     organization.companyName ||
@@ -87,12 +92,11 @@ export function DispatchInvoiceModal({
   const issueDateFormatted = formatEditorialDate(issueDate);
   const testEmail = organization.testRecipientEmail || 'shahjahan.rasell@gmail.com';
 
-  const buildDefaultSubject = () => `Invoice ${invoiceNumber} from ${senderDisplayName}`;
+  const buildDefaultSubject = () =>
+    `Invoice # ${invoiceNumber} — ${totalFormatted} from ${senderEntityName}`;
 
   const buildDefaultMessage = () =>
-    `Dear ${client?.name || 'Valued Client'},\n\nPlease find enclosed Invoice ${invoiceNumber} issued by ${
-      organization.companyName || organization.principalName || senderDisplayName
-    } in the amount of ${totalFormatted}, due on ${dueDateFormatted}.\n\nYou may inspect the certified archival invoice and download the official US Letter PDF using the secure portal link and 6-digit verification PIN provided below.\n\nThank you for your business and continued partnership.\n\nSincerely,\n${signerName}`;
+    `Dear ${client?.name || 'Valued Client'},\n\nPlease find attached Invoice ${invoiceNumber} for ${totalFormatted}, due on ${dueDateFormatted}. You can also view and download the invoice as a PDF through the secure portal using the link and six-digit verification PIN below.\n\nThank you for your business and continued partnership.\n\nSincerely,\n${signerName}`;
 
   // Recipient chip states
   const [toEmails, setToEmails] = useState<string[]>(

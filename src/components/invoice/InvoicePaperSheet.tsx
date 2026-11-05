@@ -1116,7 +1116,7 @@ export function InvoicePaperSheet({
 
       {/* PRE-DISPATCH REVIEW & EMAIL COMPOSER STUDIO MODAL */}
       <DispatchInvoiceModal
-        key={`${selectedClientId}-${invoiceNumber}-${showDispatchStudio}`}
+        key={`${selectedClientId}-${invoiceNumber}-${totals.totalCents}-${dueDate}-${showDispatchStudio}`}
         isOpen={showDispatchStudio}
         isSubmitting={isPending}
         onClose={() => setShowDispatchStudio(false)}

@@ -87,24 +87,31 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   const ccList = ccEmails.map((e) => e.trim()).filter(Boolean);
   const bccList = bccEmails.map((e) => e.trim()).filter(Boolean);
 
+  // Build From / Billed to HTML block if organization & client are provided
+  const fromName =
+    organization?.entityType === 'INDIVIDUAL'
+      ? organization.principalName || organization.companyName || senderName || companyName
+      : organization?.companyName || organization?.principalName || companyName || senderName;
+
   const subjectLine =
-    customSubject?.trim() || `Invoice ${invoiceNumber} from ${companyName || senderName}`;
+    customSubject?.trim() ||
+    `Invoice # ${invoiceNumber} — ${totalFormatted} from ${fromName || senderName || companyName}`;
 
   const greetingHtml = customMessage?.trim()
     ? formatCustomMessageHtml(customMessage)
-    : `Dear ${escapeHtml(recipientName || 'Valued Client')},<br><br>An invoice has been issued by <strong>${escapeHtml(companyName || senderName)}</strong>.`;
+    : `Dear ${escapeHtml(
+        recipientName || 'Valued Client'
+      )},<br><br>Please find attached Invoice <strong>${escapeHtml(
+        invoiceNumber
+      )}</strong> for <strong>${escapeHtml(totalFormatted)}</strong>, due on <strong>${escapeHtml(
+        dueDateFormatted
+      )}</strong>. You can also view and download the invoice as a PDF through the secure portal using the link and six-digit verification PIN below.`;
 
   const resendApiKey = resendApiKeyOverride?.trim() || process.env.RESEND_API_KEY;
   const senderFrom =
     emailFromOverride?.trim() ||
     process.env.EMAIL_FROM ||
     "The Architect's Ledger <onboarding@resend.dev>";
-
-  // Build From / Billed to HTML block if organization & client are provided
-  const fromName =
-    organization?.entityType === 'INDIVIDUAL'
-      ? organization.principalName || organization.companyName
-      : organization?.companyName || organization?.principalName || companyName || senderName;
 
   const partyBlockHtml =
     organization && client
