@@ -28,7 +28,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-paper text-ink-primary border border-bone shadow-sheet rounded-[2px] p-8 md:p-10 relative">
         {/* Top Ledger Motif */}
         <div className="text-center pb-6 mb-6 border-b border-bone">
-          <ArtisanLogo size="md" className="justify-center mb-3" />
+          <ArtisanLogo size="md" className="justify-center mb-3" onPaper />
           <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-1">
             FINANCIAL ACCESS TERMINAL
           </span>

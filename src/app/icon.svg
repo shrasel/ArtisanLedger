@@ -1,12 +1,23 @@
-<svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="14" fill="#18191D"/>
-  <rect x="2" y="2" width="60" height="60" rx="12" stroke="#2B2D35" stroke-width="2"/>
-  <!-- Architect Caliper & Apex (A) -->
-  <path d="M32 14L46 44H38.5L32 28.5L25.5 44H18L32 14Z" fill="#FAF8F5"/>
-  <!-- Ledger Foot & Base (L) -->
-  <path d="M26 38H46V44H26V38Z" fill="#D4AF37"/>
-  <!-- Crossbar Ledger Rule -->
-  <rect x="23" y="32" width="18" height="2" fill="#D4AF37" rx="0.5"/>
-  <!-- Precision Compass Diamond -->
-  <polygon points="32,19 34.5,23 32,27 29.5,23" fill="#D4AF37"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Artisan Ledger Favicon</title>
+  <style>
+    :root {
+      --sheet-bg: #FAF8F5;
+      --ink: #212224;
+      --accent: #2B4C3F;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --sheet-bg: #18191D;
+        --ink: #F0EBE1;
+        --accent: #9ABBA8;
+      }
+    }
+    .sheet { fill: var(--sheet-bg); stroke: var(--ink); }
+    .rules { stroke: var(--ink); }
+    .mark { stroke: var(--accent); }
+  </style>
+  <path class="sheet" d="M12 6h25l15 15v37H12z M37 7v15h14" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path class="rules" d="M20 31h23 M20 38h23" fill="none" stroke-width="3.5" stroke-linecap="square"/>
+  <path class="mark" d="m27 47 5 5 12-13" fill="none" stroke-width="4.5" stroke-linecap="square" stroke-linejoin="miter"/>
 </svg>

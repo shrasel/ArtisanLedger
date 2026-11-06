@@ -7,10 +7,14 @@ export const metadata: Metadata = {
     'Minimalist, tactile, archival legal document invoicing platform with zero floating-point currency precision, tokenized PIN delivery, and server-side PDF generation.',
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-light.svg', media: '(prefers-color-scheme: light)', type: 'image/svg+xml' },
+      { url: '/favicon-dark.svg', media: '(prefers-color-scheme: dark)', type: 'image/svg+xml' },
+      { url: '/favicon-light-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-light-16.png', sizes: '16x16', type: 'image/png' },
     ],
     apple: [{ url: '/apple-icon.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.ico',
   },
 };
 

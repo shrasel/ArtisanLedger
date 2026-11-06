@@ -4,10 +4,13 @@ import React from 'react';
 
 interface ArtisanLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'icon' | 'full';
   showWordmark?: boolean;
   subtitle?: string;
   className?: string;
   animated?: boolean;
+  onPaper?: boolean;
+  theme?: 'light' | 'dark' | 'auto';
 }
 
 const SIZE_MAP = {
@@ -18,56 +21,157 @@ const SIZE_MAP = {
   xl: 'w-14 h-14',
 };
 
+const FULL_SIZE_MAP = {
+  xs: 'h-6 w-auto',
+  sm: 'h-8 w-auto',
+  md: 'h-10 w-auto',
+  lg: 'h-12 w-auto',
+  xl: 'h-16 w-auto',
+};
+
 export function ArtisanLogo({
   size = 'md',
+  variant = 'icon',
   showWordmark = false,
   subtitle,
   className = '',
   animated = false,
+  onPaper = false,
+  theme = 'auto',
 }: ArtisanLogoProps) {
   const sizeClass = SIZE_MAP[size] || SIZE_MAP.md;
+  const fullSizeClass = FULL_SIZE_MAP[size] || FULL_SIZE_MAP.md;
 
+  // Determine stroke color classes based on theme and paper surface
+  let inkClass = 'stroke-[#212224] dark:stroke-[#F0EBE1]';
+  let accentClass = 'stroke-[#2B4C3F] dark:stroke-[#9ABBA8]';
+  let textClass = 'text-[#212224] dark:text-[#F0EBE1]';
+  let subtextClass = 'text-[#2B4C3F] dark:text-[#9ABBA8]';
+
+  if (onPaper || theme === 'light') {
+    inkClass = 'stroke-[#212224]';
+    accentClass = 'stroke-[#2B4C3F]';
+    textClass = 'text-[#212224]';
+    subtextClass = 'text-[#2B4C3F]';
+  } else if (theme === 'dark') {
+    inkClass = 'stroke-[#F0EBE1]';
+    accentClass = 'stroke-[#9ABBA8]';
+    textClass = 'text-[#F0EBE1]';
+    subtextClass = 'text-[#9ABBA8]';
+  }
+
+  // If full wordmark logo variant requested
+  if (variant === 'full') {
+    return (
+      <div className={`inline-flex items-center ${className}`}>
+        {/* Full Vector SVG with exact brand geometry */}
+        <svg
+          className={`${fullSizeClass} shrink-0 transition-transform duration-200 ${
+            animated ? 'hover:scale-[1.02]' : ''
+          }`}
+          viewBox="0 0 620 120"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-label="Artisan Ledger"
+        >
+          {/* Folded Paper Document Outline */}
+          <path
+            d="M20 15h42l19 19v70H20z M62 16v19h19"
+            fill="none"
+            className={inkClass}
+            strokeWidth="4"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+          />
+          {/* Ledger Horizontal Rules */}
+          <path
+            d="M34 50h32 M34 63h32 M34 76h21"
+            fill="none"
+            className={inkClass}
+            strokeWidth="3"
+            strokeLinecap="square"
+          />
+          {/* Verification Mark */}
+          <path
+            d="m59 89 6 6 11-13"
+            fill="none"
+            className={accentClass}
+            strokeWidth="4"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+          />
+          {/* Typography */}
+          <text
+            x="108"
+            y="62"
+            className={textClass}
+            fill="currentColor"
+            fontFamily="Georgia, 'Times New Roman', serif"
+            fontSize="38"
+            fontWeight="600"
+            letterSpacing="-1.1"
+          >
+            Artisan Ledger
+          </text>
+          <text
+            x="110"
+            y="91"
+            className={subtextClass}
+            fill="currentColor"
+            fontFamily="'Courier New', Courier, monospace"
+            fontSize="11"
+            fontWeight="500"
+            letterSpacing="3.2"
+          >
+            INVOICE
+          </text>
+        </svg>
+      </div>
+    );
+  }
+
+  // Icon Emblem Variant (128x128 Geometry)
   return (
     <div className={`inline-flex items-center gap-3 ${className}`}>
-      {/* Handcrafted Emblem Mark */}
       <svg
-        className={`${sizeClass} shrink-0 rounded-[22%] shadow-xs transition-transform duration-200 ${
+        className={`${sizeClass} shrink-0 transition-transform duration-200 ${
           animated ? 'hover:scale-105' : ''
         }`}
-        viewBox="0 0 64 64"
+        viewBox="0 0 128 128"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        {/* Archival Obsidian Container */}
-        <rect width="64" height="64" rx="14" fill="#18191D" />
-        <rect
-          x="2"
-          y="2"
-          width="60"
-          height="60"
-          rx="12"
-          stroke="#2B2D35"
-          strokeWidth="1.5"
-        />
-
-        {/* Architect Apex & Caliper (A) in Archival Cotton Paper Ink */}
+        {/* Document Folded Sheet */}
         <path
-          d="M32 14L46 44H38.5L32 28.5L25.5 44H18L32 14Z"
-          fill="#FAF8F5"
+          d="M25 14h48l30 30v70H25z M73 15v30h29"
+          fill="none"
+          className={inkClass}
+          strokeWidth="5"
+          strokeLinecap="square"
+          strokeLinejoin="miter"
         />
-
-        {/* Ledger Base & Pedestal (L) in Rich Status Brass */}
-        <path d="M26 38H46V44H26V38Z" fill="#D4AF37" />
-
-        {/* Horizontal Ruled Ledger Guideline */}
-        <rect x="23" y="32" width="18" height="2" fill="#D4AF37" rx="0.5" />
-
-        {/* Precision Artisan Compass Diamond */}
-        <polygon points="32,19 34.5,23 32,27 29.5,23" fill="#D4AF37" />
+        {/* Ledger Rules */}
+        <path
+          d="M42 60h44 M42 75h44 M42 90h27"
+          fill="none"
+          className={inkClass}
+          strokeWidth="4"
+          strokeLinecap="square"
+        />
+        {/* Verification Checkmark */}
+        <path
+          d="m75 99 7 7 14-17"
+          fill="none"
+          className={accentClass}
+          strokeWidth="5"
+          strokeLinecap="square"
+          strokeLinejoin="miter"
+        />
       </svg>
 
-      {/* Optional Wordmark */}
+      {/* Optional Wordmark when requested beside icon */}
       {showWordmark && (
         <div className="min-w-0">
           <span className="font-serif text-base sm:text-lg 2xl:text-xl font-bold tracking-tight text-paper block leading-none truncate">
