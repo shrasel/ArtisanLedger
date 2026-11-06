@@ -32,7 +32,7 @@ export function RecipientPortalView({
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-status-brass" />
           <span className="font-serif font-bold text-sm tracking-wide text-paper uppercase">
-            The Architect's Ledger
+            Artisan Ledger
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -65,7 +65,7 @@ export function RecipientPortalView({
 
       {/* Footer */}
       <footer className="w-full max-w-[850px] mt-16 pt-6 border-t border-obsidian-border text-center text-[10px] font-mono text-ink-ghost uppercase tracking-widest">
-        Certified Financial Instrument &bull; The Architect's Ledger &bull; Archival Legal Record
+        Certified Financial Instrument &bull; Artisan Ledger &bull; Archival Legal Record
       </footer>
     </div>
   );

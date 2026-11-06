@@ -31,7 +31,7 @@ export default function LoginPage() {
             FINANCIAL ACCESS TERMINAL
           </span>
           <h1 className="font-serif text-3xl font-bold tracking-tight text-ink-primary">
-            The Architect's Ledger
+            Artisan Ledger
           </h1>
           <p className="text-xs font-sans text-ink-secondary mt-1">
             Sign in to access your certified ledger & client dispatches.

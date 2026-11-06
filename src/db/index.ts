@@ -150,7 +150,7 @@ try {
   } catch {}
   try {
     sqlite.exec(
-      'ALTER TABLE organizations ADD COLUMN email_from TEXT DEFAULT "The Architect\'s Ledger <onboarding@resend.dev>";'
+      'ALTER TABLE organizations ADD COLUMN email_from TEXT DEFAULT "Artisan Ledger <onboarding@resend.dev>";'
     );
   } catch {}
   try {

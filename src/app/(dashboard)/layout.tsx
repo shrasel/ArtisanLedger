@@ -30,7 +30,7 @@ export default async function DashboardLayout({
           organization.letterheadTitle ||
           organization.companyName ||
           organization.principalName ||
-          "The Architect's Ledger"
+          'Artisan Ledger'
         }
       />
 
@@ -41,7 +41,7 @@ export default async function DashboardLayout({
 
       {/* Bottom Archival Ledger Bar */}
       <footer className="border-t border-obsidian-border bg-obsidian-light/50 py-4 px-4 text-center font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-ink-ghost">
-        The Architect&apos;s Ledger &bull; Standard WAL Mode &bull; Integer Cent Precision &bull; Editorial Archival Engine
+        Artisan Ledger &bull; Standard WAL Mode &bull; Integer Cent Precision &bull; Archival Invoicing Engine
       </footer>
     </div>
   );

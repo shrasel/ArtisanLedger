@@ -2,12 +2,12 @@
 name: ledger-schema
 description: >-
   Database schema, SQLite WAL configuration, Drizzle ORM models, idempotent migrations,
-  and integer-cent financial arithmetic rules for The Architect's Ledger.
+  and integer-cent financial arithmetic rules for Artisan Ledger.
   Activate this skill whenever adding, modifying, or querying database tables, columns,
   clients, organizations, invoices, or financial calculations.
 ---
 
-# Ledger Schema & Financial Arithmetic Skill
+# Artisan Ledger — Schema & Financial Arithmetic Skill
 
 ## 1. Key Files (Read Only What You Need)
 - [`src/db/schema.ts`](../../../src/db/schema.ts): Drizzle table definitions (`users`, `organizations`, `clients`, `invoices`, `invoiceItems`).

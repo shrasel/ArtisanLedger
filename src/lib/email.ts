@@ -115,7 +115,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   const rawSenderFrom =
     emailFromOverride?.trim() ||
     process.env.EMAIL_FROM ||
-    `${fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+    `${fromName || 'Artisan Ledger'} <onboarding@resend.dev>`;
 
   // Public webmail domains (gmail.com, yahoo.com, outlook.com, etc.) cannot be DNS-verified in Resend.
   // If user configured "Name <user@gmail.com>" or "user@gmail.com", automatically use "<onboarding@resend.dev>"
@@ -124,12 +124,12 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
   let replyToEmail: string | undefined = organization?.email || undefined;
 
   const angleMatch = rawSenderFrom.match(/^([^<]*)<([^>]+)>$/);
-  const extractedName = (angleMatch ? angleMatch[1].trim() : fromName || "The Architect's Ledger").replace(/["<>]/g, '');
+  const extractedName = (angleMatch ? angleMatch[1].trim() : fromName || 'Artisan Ledger').replace(/["<>]/g, '');
   const extractedEmail = (angleMatch ? angleMatch[2].trim() : rawSenderFrom.trim()).toLowerCase();
 
   if (/@(gmail|googlemail|yahoo|outlook|hotmail|icloud|me|aol|protonmail|proton|live|msn)\./i.test(extractedEmail)) {
     replyToEmail = extractedEmail;
-    senderFrom = `${extractedName || fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+    senderFrom = `${extractedName || fromName || 'Artisan Ledger'} <onboarding@resend.dev>`;
   } else if (!rawSenderFrom.includes('@')) {
     senderFrom = `${rawSenderFrom} <onboarding@resend.dev>`;
   }
@@ -436,7 +436,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>${escapeHtml(companyName || senderName || "The Architect's Ledger")}</h1>
+      <h1>${escapeHtml(companyName || senderName || "Artisan Ledger")}</h1>
       ${
         organization?.letterheadTagline
           ? `<p>${escapeHtml(organization.letterheadTagline)}</p>`
@@ -487,7 +487,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       </div>
     </div>
     <div class="footer">
-      This is a secure archival document dispatch issued via The Architect's Ledger.<br>
+      This is a secure archival document dispatch issued via Artisan Ledger.<br>
       An official US Letter PDF copy of Invoice ${escapeHtml(invoiceNumber)} is attached to this email.
     </div>
   </div>
@@ -515,7 +515,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
       });
 
       const info = await transporter.sendMail({
-        from: `"${extractedName || fromName || "The Architect's Ledger"}" <${activeSmtpUser}>`,
+        from: `"${extractedName || fromName || "Artisan Ledger"}" <${activeSmtpUser}>`,
         to: toList,
         ...(ccList.length > 0 ? { cc: ccList } : {}),
         ...(bccList.length > 0 ? { bcc: bccList } : {}),
@@ -600,7 +600,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
         /domain is not verified/i.test(result.error.message || '') &&
         !activeFrom.includes('onboarding@resend.dev')
       ) {
-        activeFrom = `${extractedName || fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+        activeFrom = `${extractedName || fromName || "Artisan Ledger"} <onboarding@resend.dev>`;
         console.warn(
           `[Email Dispatch] Sender domain unverified (${senderFrom}). Retrying automatically with ${activeFrom}...`
         );
@@ -617,7 +617,7 @@ export async function sendInvoiceEmail(options: SendInvoiceEmailOptions) {
           matchOwnEmail?.[1]?.trim() ||
           organization?.testRecipientEmail?.trim() ||
           'shahjahan.rasell@gmail.com';
-        activeFrom = `${extractedName || fromName || "The Architect's Ledger"} <onboarding@resend.dev>`;
+        activeFrom = `${extractedName || fromName || "Artisan Ledger"} <onboarding@resend.dev>`;
         console.warn(
           `[Email Dispatch] Resend sandbox mode active; routing email for [${toList.join(
             ', '

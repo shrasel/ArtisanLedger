@@ -5,7 +5,7 @@ const assert = require('assert');
 const bcrypt = require('bcryptjs');
 
 console.log('==============================================================');
-console.log("   THE ARCHITECT'S LEDGER — MASTER VERIFICATION HARNESS");
+console.log('   ARTISAN LEDGER — MASTER VERIFICATION HARNESS');
 console.log('==============================================================\n');
 
 const rootDir = path.join(__dirname, '..');
@@ -47,7 +47,7 @@ try {
 try { db.exec('ALTER TABLE organizations ADD COLUMN resend_api_key TEXT;'); } catch {}
 try {
   db.exec(
-    'ALTER TABLE organizations ADD COLUMN email_from TEXT DEFAULT "The Architect\'s Ledger <onboarding@resend.dev>";'
+    'ALTER TABLE organizations ADD COLUMN email_from TEXT DEFAULT "Artisan Ledger <onboarding@resend.dev>";'
   );
 } catch {}
 try {

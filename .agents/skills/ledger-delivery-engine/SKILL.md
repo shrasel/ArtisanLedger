@@ -2,12 +2,12 @@
 name: ledger-delivery-engine
 description: >-
   PDF streaming engine (@react-pdf/renderer), US Letter page geometry, tokenized
-  PIN verification portal, and transactional email dispatch for The Architect's Ledger.
+  PIN verification portal, and transactional email dispatch for Artisan Ledger.
   Activate this skill whenever working on PDF layout, invoice dispatch, PIN gates,
   recipient view portals, or email templates.
 ---
 
-# Ledger Delivery Engine & PDF Streaming Skill
+# Artisan Ledger — Delivery Engine & PDF Streaming Skill
 
 ## 1. Key Files
 - [`src/lib/pdf/InvoicePdfTemplate.tsx`](../../../src/lib/pdf/InvoicePdfTemplate.tsx): `@react-pdf/renderer` document layout.

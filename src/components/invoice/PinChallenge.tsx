@@ -290,7 +290,7 @@ export function PinChallenge({
         {/* Security Assurance */}
         <div className="mt-8 pt-4 border-t border-bone text-center">
           <p className="text-[10px] font-mono text-ink-ghost uppercase tracking-wider">
-            256-Bit Encrypted Archival Access Gateway &bull; The Architect's Ledger
+            256-Bit Encrypted Archival Access Gateway &bull; Artisan Ledger
           </p>
         </div>
       </div>

@@ -36,7 +36,7 @@ export default async function HomePage() {
           <div className="flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-status-brass" />
             <span className="font-serif text-lg font-bold tracking-tight text-paper">
-              The Architect's Ledger
+              Artisan Ledger
             </span>
           </div>
 
@@ -228,7 +228,7 @@ export default async function HomePage() {
       {/* Bottom Footer */}
       <footer className="mt-auto border-t border-obsidian-border py-8 px-4 text-center text-xs font-mono text-ink-ghost">
         <p className="tracking-widest uppercase text-[10px]">
-          The Architect's Ledger &bull; Standard WAL SQLite &bull; Drizzle ORM &bull; React-PDF
+          Artisan Ledger &bull; Standard WAL SQLite &bull; Drizzle ORM &bull; React-PDF
         </p>
       </footer>
     </div>

@@ -50,7 +50,7 @@ export const organizations = sqliteTable('organizations', {
   resendApiKey: text('resend_api_key'),
   smtpUser: text('smtp_user'),
   smtpPass: text('smtp_pass'),
-  emailFrom: text('email_from').default("The Architect's Ledger <onboarding@resend.dev>"),
+  emailFrom: text('email_from').default("Artisan Ledger <onboarding@resend.dev>"),
   testRecipientEmail: text('test_recipient_email').default('shahjahan.rasell@gmail.com'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),
 });

@@ -30,7 +30,7 @@ export default function RegisterPage() {
             ORIGINATE LEDGER ACCOUNT
           </span>
           <h1 className="font-serif text-3xl font-bold tracking-tight text-ink-primary">
-            The Architect's Ledger
+            Artisan Ledger
           </h1>
           <p className="text-xs font-sans text-ink-secondary mt-1">
             Establish your certified firm registry & billing authority.

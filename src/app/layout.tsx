@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: "The Architect's Ledger — Minimalist High-End Invoicing",
+  title: 'Artisan Ledger — Self-Hosted Archival Invoicing Platform',
   description:
-    'Editorial, tactile, archival legal document invoicing platform with zero floating-point currency precision, tokenized PIN delivery, and server-side PDF generation.',
+    'Minimalist, tactile, archival legal document invoicing platform with zero floating-point currency precision, tokenized PIN delivery, and server-side PDF generation.',
 };
 
 export default function RootLayout({

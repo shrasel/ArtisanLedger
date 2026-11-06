@@ -46,7 +46,7 @@ export function NavHeader({ companyName }: NavHeaderProps) {
               <span className="w-2.5 h-2.5 rounded-full bg-status-brass shrink-0 group-hover:scale-110 transition-transform" />
               <div className="min-w-0">
                 <span className="font-serif text-base sm:text-lg 2xl:text-xl font-bold tracking-tight text-paper block leading-none truncate">
-                  The Architect&apos;s Ledger
+                  Artisan Ledger
                 </span>
                 <span className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.2em] text-ink-ghost block mt-0.5 truncate max-w-[160px] sm:max-w-[260px]">
                   {companyName}

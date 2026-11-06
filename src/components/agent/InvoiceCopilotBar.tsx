@@ -109,7 +109,7 @@ export function InvoiceCopilotBar({ onApplyDraft }: InvoiceCopilotBarProps) {
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-status-brass" />
               <span className="font-serif text-sm font-bold tracking-wide text-paper">
-                The Architect's Ledger &bull; Intent-to-Invoice Copilot
+                Artisan Ledger &bull; Intent-to-Invoice Copilot
               </span>
             </div>
             <button

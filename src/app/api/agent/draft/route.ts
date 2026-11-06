@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
               {
                 role: 'system',
                 content:
-                  'You are an expert bookkeeping assistant for "The Architect\'s Ledger". Your job is to parse unstructured human text into a structured invoice draft payload. Always convert dollar amounts into integer cents (e.g., $100 -> 10000). Parse dates or relative offsets (e.g., "Net 30" -> calculate due date 30 days ahead).',
+                  'You are an expert bookkeeping assistant for "Artisan Ledger". Your job is to parse unstructured human text into a structured invoice draft payload. Always convert dollar amounts into integer cents (e.g., $100 -> 10000). Parse dates or relative offsets (e.g., "Net 30" -> calculate due date 30 days ahead).',
               },
               { role: 'user', content: prompt },
             ],

@@ -131,7 +131,7 @@ export async function POST(
       session.organization.letterheadTitle ||
       session.organization.companyName ||
       session.organization.principalName ||
-      "The Architect's Ledger";
+      "Artisan Ledger";
 
     // Dispatch email with complete invoice details + PDF attachment
     const emailRes = await sendInvoiceEmail({

@@ -2,12 +2,12 @@
 name: ledger-design-system
 description: >-
   Editorial design system, color palette, typography rules, Living Paper Sheet layout,
-  and Dark/Light theme contrast architecture for The Architect's Ledger.
+  and Dark/Light theme contrast architecture for Artisan Ledger.
   Activate this skill whenever creating or modifying UI components, pages, modals,
   buttons, forms, or CSS themes.
 ---
 
-# The Architect's Ledger — Editorial Design System Skill
+# Artisan Ledger — Editorial Design System Skill
 
 ## 1. Key Files
 - [`tailwind.config.ts`](../../../tailwind.config.ts): Custom theme tokens (`obsidian`, `paper`, `bone`, `ink`, `status`), fonts, and editorial shadows.

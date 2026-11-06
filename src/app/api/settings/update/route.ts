@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         smtpPass: body.smtpPass !== undefined ? body.smtpPass || null : session.organization.smtpPass,
         emailFrom:
           body.emailFrom !== undefined
-            ? body.emailFrom || "The Architect's Ledger <onboarding@resend.dev>"
+            ? body.emailFrom || "Artisan Ledger <onboarding@resend.dev>"
             : session.organization.emailFrom,
         testRecipientEmail:
           body.testRecipientEmail !== undefined

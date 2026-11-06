@@ -71,14 +71,14 @@ export function DispatchInvoiceModal({
 }: DispatchInvoiceModalProps) {
   const senderEntityName =
     organization.entityType === 'INDIVIDUAL'
-      ? organization.principalName || organization.companyName || "The Architect's Ledger"
-      : organization.companyName || organization.principalName || "The Architect's Ledger";
+      ? organization.principalName || organization.companyName || 'Artisan Ledger'
+      : organization.companyName || organization.principalName || 'Artisan Ledger';
 
   const senderDisplayName =
     organization.letterheadTitle ||
     organization.companyName ||
     organization.principalName ||
-    "The Architect's Ledger";
+    'Artisan Ledger';
 
   const signerName =
     organization.entityType === 'INDIVIDUAL'
@@ -655,7 +655,7 @@ export function DispatchInvoiceModal({
                       {organization.letterheadTitle ||
                         organization.companyName ||
                         organization.principalName ||
-                        "The Architect's Ledger"}
+                        'Artisan Ledger'}
                     </h1>
                     {(organization.letterheadTagline ??
                       'Archival Financial Document / Certified Ledger') && (
@@ -1073,7 +1073,7 @@ export function DispatchInvoiceModal({
                     </div>
 
                     <div className="px-8 py-4 bg-[#F3EFEA] border-t border-[#E6E1D9] text-center text-[11px] font-sans text-[#A1A3A8]">
-                      This is a secure archival document dispatch issued via The Architect&apos;s Ledger.
+                      This is a secure archival document dispatch issued via Artisan Ledger.
                       <br />
                       Please do not share your verification PIN with unauthorized third parties.
                     </div>

@@ -64,7 +64,7 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
     smtpPass: organization.smtpPass || '',
     resendApiKey: organization.resendApiKey || '',
     emailFrom:
-      organization.emailFrom || "The Architect's Ledger <onboarding@resend.dev>",
+      organization.emailFrom || "Artisan Ledger <onboarding@resend.dev>",
     testRecipientEmail:
       organization.testRecipientEmail || 'shahjahan.rasell@gmail.com',
   });
@@ -317,7 +317,7 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
                   placeholder={
                     formData.companyName ||
                     formData.principalName ||
-                    "The Architect's Ledger"
+                    "Artisan Ledger"
                   }
                   value={formData.letterheadTitle}
                   onChange={(e) => handleChange('letterheadTitle', e.target.value)}
@@ -361,7 +361,7 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
                 {formData.letterheadTitle ||
                   formData.companyName ||
                   formData.principalName ||
-                  "The Architect's Ledger"}
+                  "Artisan Ledger"}
               </div>
             </div>
           </div>
@@ -826,7 +826,7 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
                   </label>
                   <input
                     type="text"
-                    placeholder="The Architect's Ledger <onboarding@resend.dev>"
+                    placeholder="Artisan Ledger <onboarding@resend.dev>"
                     value={formData.emailFrom}
                     onChange={(e) => handleChange('emailFrom', e.target.value)}
                     className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"

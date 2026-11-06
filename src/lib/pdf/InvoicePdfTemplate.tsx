@@ -324,7 +324,7 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
               {organization.letterheadTitle ||
                 organization.companyName ||
                 organization.principalName ||
-                "The Architect's Ledger"}
+                'Artisan Ledger'}
             </Text>
             {(organization.letterheadTagline ?? 'Archival Financial Document / Certified Ledger') ? (
               <Text style={styles.brandSubtitle}>

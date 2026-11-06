@@ -1,6 +1,6 @@
-# The Architect's Ledger — Agent Constitution & Operating Rules
+# Artisan Ledger — Agent Constitution & Operating Rules
 
-You are working on **The Architect's Ledger**, a minimalist, tactile, archival legal document invoicing platform built with Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Drizzle ORM (`better-sqlite3` in WAL mode), and `@react-pdf/renderer`.
+You are working on **Artisan Ledger**, a minimalist, tactile, archival legal document invoicing platform built with Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Drizzle ORM (`better-sqlite3` in WAL mode), and `@react-pdf/renderer`.
 
 ## 1. Progressive Disclosure & Token Conservation (CRITICAL)
 To minimize token consumption and prevent context bloat:

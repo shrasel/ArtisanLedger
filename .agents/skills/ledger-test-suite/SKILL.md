@@ -2,11 +2,11 @@
 name: ledger-test-suite
 description: >-
   Automated verification harness, regression testing, and quality assurance protocol
-  for The Architect's Ledger. Activate this skill before finishing any feature addition,
+  for Artisan Ledger. Activate this skill before finishing any feature addition,
   bug fix, schema update, UI change, or refactoring.
 ---
 
-# Ledger Automated Test Suite & Verification Skill
+# Artisan Ledger — Automated Test Suite & Verification Skill
 
 ## 1. Master Verification Command
 Always run the unified verification harness before marking any task complete:

@@ -553,7 +553,7 @@ export function InvoicePaperSheet({
               {organization.letterheadTitle ||
                 organization.companyName ||
                 organization.principalName ||
-                "The Architect's Ledger"}
+                'Artisan Ledger'}
             </h1>
             <p className="text-xs font-sans text-ink-secondary mt-1 tracking-wide">
               Document No. <span className="font-mono font-semibold">{invoiceNumber}</span>
