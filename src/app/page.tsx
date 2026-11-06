@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { StatusStamp } from '@/components/invoice/StatusStamp';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { ArtisanLogo } from '@/components/brand/ArtisanLogo';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export default async function HomePage() {
       <header className="border-b border-obsidian-border bg-obsidian-light/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-status-brass" />
+            <ArtisanLogo size="sm" />
             <span className="font-serif text-lg font-bold tracking-tight text-paper">
               Artisan Ledger
             </span>

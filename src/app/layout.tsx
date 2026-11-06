@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   title: 'Artisan Ledger — Self-Hosted Archival Invoicing Platform',
   description:
     'Minimalist, tactile, archival legal document invoicing platform with zero floating-point currency precision, tokenized PIN delivery, and server-side PDF generation.',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [{ url: '/apple-icon.svg', type: 'image/svg+xml' }],
+  },
 };
 
 export default function RootLayout({

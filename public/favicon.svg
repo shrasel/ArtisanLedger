@@ -1,0 +1,12 @@
+<svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#18191D"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" stroke="#2B2D35" stroke-width="2"/>
+  <!-- Architect Caliper & Apex (A) -->
+  <path d="M32 14L46 44H38.5L32 28.5L25.5 44H18L32 14Z" fill="#FAF8F5"/>
+  <!-- Ledger Foot & Base (L) -->
+  <path d="M26 38H46V44H26V38Z" fill="#D4AF37"/>
+  <!-- Crossbar Ledger Rule -->
+  <rect x="23" y="32" width="18" height="2" fill="#D4AF37" rx="0.5"/>
+  <!-- Precision Compass Diamond -->
+  <polygon points="32,19 34.5,23 32,27 29.5,23" fill="#D4AF37"/>
+</svg>

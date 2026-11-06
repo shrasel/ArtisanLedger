@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Plus, FileText, Users, Settings, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { logoutAction } from '@/app/(auth)/actions';
+import { ArtisanLogo } from '@/components/brand/ArtisanLogo';
 
 interface NavHeaderProps {
   companyName: string;
@@ -43,7 +44,7 @@ export function NavHeader({ companyName }: NavHeaderProps) {
           {/* Brand + Desktop Nav */}
           <div className="flex items-center gap-4 lg:gap-8 min-w-0">
             <Link href="/invoices" className="flex items-center gap-2 sm:gap-2.5 group min-w-0">
-              <span className="w-2.5 h-2.5 rounded-full bg-status-brass shrink-0 group-hover:scale-110 transition-transform" />
+              <ArtisanLogo size="sm" animated />
               <div className="min-w-0">
                 <span className="font-serif text-base sm:text-lg 2xl:text-xl font-bold tracking-tight text-paper block leading-none truncate">
                   Artisan Ledger

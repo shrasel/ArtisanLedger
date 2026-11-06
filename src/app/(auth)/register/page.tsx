@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { registerAction } from '../actions';
 import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArtisanLogo } from '@/components/brand/ArtisanLogo';
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +27,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-obsidian text-paper flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-paper text-ink-primary border border-bone shadow-sheet rounded-[2px] p-8 md:p-10 relative">
         <div className="text-center pb-6 mb-6 border-b border-bone">
+          <ArtisanLogo size="md" className="justify-center mb-3" />
           <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-1">
             ORIGINATE LEDGER ACCOUNT
           </span>

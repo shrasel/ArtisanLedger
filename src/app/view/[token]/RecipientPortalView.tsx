@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { PinChallenge } from '@/components/invoice/PinChallenge';
 import { InvoicePaperSheet } from '@/components/invoice/InvoicePaperSheet';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { ArtisanLogo } from '@/components/brand/ArtisanLogo';
 import type { Invoice, InvoiceItem, Organization, Client } from '@/db/schema';
 
 interface RecipientPortalViewProps {
@@ -29,8 +30,8 @@ export function RecipientPortalView({
     <div className="min-h-screen bg-obsidian text-paper px-4 py-8 md:py-12 flex flex-col items-center">
       {/* Editorial Top Brand Header */}
       <div className="w-full max-w-[850px] flex items-center justify-between pb-6 mb-8 border-b border-obsidian-border text-xs font-mono">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-status-brass" />
+        <div className="flex items-center gap-2.5">
+          <ArtisanLogo size="xs" />
           <span className="font-serif font-bold text-sm tracking-wide text-paper uppercase">
             Artisan Ledger
           </span>
