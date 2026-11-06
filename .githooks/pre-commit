@@ -1,0 +1,26 @@
+#!/bin/sh
+# ==============================================================================
+# Artisan Ledger — Git Pre-Commit Security & Invariant Verification Gate
+# ==============================================================================
+# Runs automatically before every git commit:
+# 1. Scans staged files and diffs for secrets, keys, and SQLite database leaks.
+# 2. Runs the master verification suite to guarantee zero broken commits.
+# ==============================================================================
+
+set -e
+
+# Run security & secret scanning
+node scripts/verify-secrets.js
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+# Run master test suite
+node scripts/run-all-tests.js
+if [ $? -ne 0 ]; then
+  echo "\n\033[31;1m[Pre-Commit Gate Error]\033[0m Master test suite failed. Commit aborted."
+  exit 1
+fi
+
+echo "\033[32;1m✓ Pre-commit gate passed: All security checks and test suites verified.\033[0m\n"
+exit 0

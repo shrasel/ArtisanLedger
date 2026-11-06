@@ -1,37 +1,119 @@
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# ==============================================================================
+# ARTISAN LEDGER — ARCHIVAL GIT IGNORE SPECIFICATION
+# ==============================================================================
 
-# testing
-/coverage
+# ------------------------------------------------------------------------------
+# 1. CRITICAL SECURITY & SECRET SHIELDS
+# ------------------------------------------------------------------------------
+# Environment files (NEVER commit live secrets or credentials)
+.env
+.env.*
+.env*.local
+!.env.example
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
+# Private Keys, Certificates & Tokens
 *.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+*.pub
+*.secret
+*.keystore
 
-# debug logs
+# API Credentials & Service Accounts
+credentials.json
+service-account*.json
+client_secret*.json
+*.oauth.json
+.npmrc
+
+# ------------------------------------------------------------------------------
+# 2. DATABASE & ARCHIVAL TRANSACTION LOGS
+# ------------------------------------------------------------------------------
+# Embedded SQLite Database & WAL / SHM Cache
+ledger.db*
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# ------------------------------------------------------------------------------
+# 3. NEXT.JS & PRODUCTION BUILDS
+# ------------------------------------------------------------------------------
+.next/
+out/
+build/
+dist/
+.vercel/
+
+# TypeScript & Babel cache
+*.tsbuildinfo
+next-env.d.ts
+
+# ------------------------------------------------------------------------------
+# 4. DEPENDENCIES & PACKAGE MANAGERS
+# ------------------------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Package Manager Debug Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
-.env*.local
-.env
+# ------------------------------------------------------------------------------
+# 5. TESTING, COVERAGE & TEMPORARY ARTIFACTS
+# ------------------------------------------------------------------------------
+coverage/
+.nyc_output/
+*.lcov
+test-results/
 
-# database
-ledger.db*
+# Temporary generated test PDFs and images (Keep public assets safe)
+*.pdf
+scripts/temp/
+test-output/
 
-# vercel
-.vercel
+# ------------------------------------------------------------------------------
+# 6. OPERATING SYSTEM & EDITOR NOISE
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+
+# Editors & IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
