@@ -2,14 +2,14 @@ const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, '..', 'ledger.db');
+const dbPath = process.env.DATABASE_URL || path.join(__dirname, '..', 'ledger.db');
 const db = new Database(dbPath);
 
 db.pragma('journal_mode = WAL');
 db.pragma('busy_timeout = 5000');
 db.pragma('foreign_keys = ON');
 
-console.log('--- Seeding The Architect\'s Ledger (Direct SQLite) ---');
+console.log('--- Seeding Artisan Ledger (Direct SQLite) ---');
 
 // Check existing user
 let user = db.prepare('SELECT * FROM users WHERE email = ?').get('architect@ledger.com');

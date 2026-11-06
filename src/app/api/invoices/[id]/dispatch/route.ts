@@ -123,9 +123,10 @@ export async function POST(
     }
 
     // Construct view URL
+    const envAppUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL)?.replace(/\/$/, '');
     const host = req.headers.get('host') || 'localhost:3005';
     const protocol = host.includes('localhost') ? 'http' : 'https';
-    const viewUrl = `${protocol}://${host}/view/${accessToken}`;
+    const viewUrl = envAppUrl ? `${envAppUrl}/view/${accessToken}` : `${protocol}://${host}/view/${accessToken}`;
 
     const senderDisplayName =
       session.organization.letterheadTitle ||

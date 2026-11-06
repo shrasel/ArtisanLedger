@@ -1,0 +1,33 @@
+# ==============================================================================
+# ARTISAN LEDGER — PRODUCTION DOCKER COMPOSE CONFIGURATION
+# Designed for Coolify, Traefik, and Self-Hosted Docker Environments
+# ==============================================================================
+
+services:
+  artisan-ledger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: artisan-ledger:latest
+    container_name: artisan-ledger
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=/app/data/ledger.db
+      - APP_URL=https://artledger.link
+      - SESSION_SECRET=${SESSION_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-Artisan Ledger <onboarding@resend.dev>}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      # Persistent volume for SQLite database and WAL logs
+      - artisan_ledger_data:/app/data
+
+volumes:
+  artisan_ledger_data:
+    driver: local

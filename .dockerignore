@@ -1,0 +1,41 @@
+# ==============================================================================
+# ARTISAN LEDGER — DOCKER BUILD CONTEXT IGNORE
+# ==============================================================================
+
+# Git & Version Control
+.git
+.githooks
+
+# Local Node & Build Caches
+node_modules
+.next
+out
+build
+dist
+*.tsbuildinfo
+next-env.d.ts
+
+# SQLite Database Files & WAL Caches
+ledger.db*
+*.db
+*.sqlite*
+data/
+
+# Environment & Secret Files
+.env
+.env*.local
+*.pem
+*.key
+*.cert
+
+# Test & Debug Artifacts
+coverage
+test-results
+*.pdf
+npm-debug.log*
+yarn-debug.log*
+
+# OS & Editor
+.DS_Store
+.idea
+.vscode
