@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Landmark, Settings2, Save, Check, Loader2, FileText, User, Mail } from 'lucide-react';
+import { Building2, Landmark, Settings2, Save, Check, Loader2, FileText, User, Mail, Users } from 'lucide-react';
 import type { Organization, Client, BankAccount } from '@/db/schema';
 import { BankWalletStack } from '@/components/settings/BankWalletStack';
+import { ClientWalletStack } from '@/components/settings/ClientWalletStack';
 import {
   parsePercentToBasisPoints,
   formatInvoiceNumber,
@@ -88,6 +89,7 @@ export function SettingsForm({
     try {
       const payload = {
         ...formData,
+        defaultClientId: undefined,
         defaultTaxRateBasisPoints: parsePercentToBasisPoints(formData.defaultTaxPercent),
       };
 
@@ -129,6 +131,67 @@ export function SettingsForm({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* TOP ROW LEFT: CLIENTS DIRECTORY */}
+        <div
+          id="clients"
+          className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 space-y-4 h-full"
+        >
+          <div className="flex items-center gap-2 pb-3 border-b border-obsidian-border text-paper">
+            <Users className="w-4 h-4 text-status-brass shrink-0" />
+            <div>
+              <h2 className="font-serif text-lg font-bold leading-none">
+                Clients Directory
+              </h2>
+              <span className="text-[10px] font-sans text-bone-dark block mt-1">
+                Manage client entities, set your default billing recipient, and originate invoices directly.
+              </span>
+            </div>
+          </div>
+
+          <ClientWalletStack
+            initialClients={clientsList}
+            initialDefaultClientId={organization.defaultClientId}
+          />
+        </div>
+
+        {/* TOP ROW RIGHT: BANKING & WIRE ACCOUNTS */}
+        <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 flex flex-col justify-between space-y-5 h-full">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-obsidian-border text-paper">
+              <Landmark className="w-4 h-4 text-status-brass shrink-0" />
+              <div>
+                <h2 className="font-serif text-lg font-bold leading-none">
+                  Banking &amp; Wire Accounts
+                </h2>
+                <span className="text-[10px] font-sans text-bone-dark block mt-1">
+                  Manage multiple bank accounts. The default account is used automatically on new invoices.
+                </span>
+              </div>
+            </div>
+
+            <BankWalletStack
+              initialAccounts={initialBankAccounts}
+              defaultHolderName={formData.companyName || formData.principalName}
+            />
+
+            <div className="pt-3 border-t border-obsidian-border">
+              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                Perforation Stub Header Label (Tear-Off Banner Text)
+              </label>
+              <input
+                type="text"
+                placeholder="TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS"
+                value={formData.remittanceStubLabel}
+                onChange={(e) => handleChange('remittanceStubLabel', e.target.value)}
+                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+              />
+              <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                Customizes the divider banner text printed across the bottom tear-off section of the invoice and PDF.
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* SECTION 1: FIRM ENTITY & LEGAL IDENTITY */}
         <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 flex flex-col justify-between space-y-5 h-full">
           <div className="space-y-5">
@@ -556,68 +619,12 @@ export function SettingsForm({
                   <span className="text-xs font-mono text-bone-dark">%</span>
                 </div>
               </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Default Billing Client
-                </label>
-                <select
-                  value={formData.defaultClientId}
-                  onChange={(e) => handleChange('defaultClientId', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                >
-                  <option value="">(None - select on creation)</option>
-                  {clientsList.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.companyName ? `${client.companyName} (${client.name})` : client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 4: WIRE REMITTANCE INSTRUCTIONS (APPLE WALLET STACK) */}
-        <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 flex flex-col justify-between space-y-5 h-full">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-obsidian-border text-paper">
-              <Landmark className="w-4 h-4 text-status-brass shrink-0" />
-              <div>
-                <h2 className="font-serif text-lg font-bold leading-none">
-                  Banking &amp; Wire Accounts Wallet
-                </h2>
-                <span className="text-[10px] font-sans text-bone-dark block mt-1">
-                  Manage multiple bank accounts. The default account is used automatically on new invoices.
-                </span>
-              </div>
-            </div>
-
-            <BankWalletStack
-              initialAccounts={initialBankAccounts}
-              defaultHolderName={formData.companyName || formData.principalName}
-            />
-
-            <div className="pt-3 border-t border-obsidian-border">
-              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                Perforation Stub Header Label (Tear-Off Banner Text)
-              </label>
-              <input
-                type="text"
-                placeholder="TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS"
-                value={formData.remittanceStubLabel}
-                onChange={(e) => handleChange('remittanceStubLabel', e.target.value)}
-                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-              />
-              <span className="text-[10px] font-sans text-ink-ghost block mt-1">
-                Customizes the divider banner text printed across the bottom tear-off section of the invoice and PDF.
-              </span>
             </div>
           </div>
         </div>
 
         {/* SECTION 5: EMAIL DISPATCH & DELIVERY ENGINE */}
-        <div className="lg:col-span-2 bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 space-y-5">
+        <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 space-y-5 h-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-obsidian-border text-paper">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-status-brass shrink-0" />

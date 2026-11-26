@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Plus, FileText, Users, Settings, LogOut } from 'lucide-react';
+import { Plus, FileText, Settings, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { logoutAction } from '@/app/(auth)/actions';
 import { ArtisanLogo } from '@/components/brand/ArtisanLogo';
@@ -21,12 +21,6 @@ export function NavHeader({ companyName }: NavHeaderProps) {
       label: 'Invoices',
       icon: FileText,
       isActive: pathname === '/invoices' || (pathname.startsWith('/invoices/') && pathname !== '/invoices/new'),
-    },
-    {
-      href: '/clients',
-      label: 'Clients',
-      icon: Users,
-      isActive: pathname.startsWith('/clients'),
     },
     {
       href: '/settings',
