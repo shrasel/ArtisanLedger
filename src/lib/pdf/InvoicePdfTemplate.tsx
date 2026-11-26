@@ -1,8 +1,63 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import path from 'path';
+import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import type { Invoice, InvoiceItem, Organization, Client } from '@/db/schema';
 import type { ResolvedBankDetails } from '@/lib/bankDetails';
 import { formatCentsToCurrency, formatEditorialDate, formatBasisPointsToPercent } from '../utils';
+
+const fontsDir = path.join(process.cwd(), 'public', 'fonts');
+
+Font.register({
+  family: 'NotoSansBengali',
+  fonts: [
+    { src: path.join(fontsDir, 'NotoSansBengali-Regular.ttf'), fontWeight: 'normal' },
+    { src: path.join(fontsDir, 'NotoSansBengali-Bold.ttf'), fontWeight: 'bold' },
+  ],
+});
+
+/**
+ * Render monetary text cleanly in PDF:
+ * - Renders `৳` (U+09F3) using the bundled NotoSansBengali TTF so it has real glyph metrics and zero overlap
+ * - Falls back to ISO currency code for any other non-WinAnsi symbol unsupported by standard Type1 fonts
+ */
+function renderPdfCurrency(cents: number, currency = 'USD', options?: { negative?: boolean; bold?: boolean }) {
+  const prefix = options?.negative ? '-' : '';
+  const formatted = formatCentsToCurrency(cents, currency);
+
+  if (formatted.includes('৳')) {
+    const parts = formatted.split('৳');
+    return (
+      <>
+        {prefix}
+        {parts[0]}
+        <Text
+          style={{
+            fontFamily: 'NotoSansBengali',
+            fontWeight: options?.bold ? 'bold' : 'normal',
+          }}
+        >
+          ৳
+        </Text>
+        {' '}
+        {parts.slice(1).join('৳').trimStart()}
+      </>
+    );
+  }
+
+  // Guard against any other non-WinAnsi currency symbol (e.g. ₹, ₩, ₫) that Type1 Courier cannot render
+  if (/[^\x00-\xFF€]/.test(formatted)) {
+    const safeCode = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      currencyDisplay: 'code',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format((cents || 0) / 100);
+    return `${prefix}${safeCode}`;
+  }
+
+  return `${prefix}${formatted}`;
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -424,8 +479,12 @@ export function InvoicePdfTemplate({ invoice, items, organization, client, resol
             <View key={item.id || index} style={styles.tableRow}>
               <Text style={styles.tdDesc}>{item.description}</Text>
               <Text style={styles.tdQty}>{item.quantity}</Text>
-              <Text style={styles.tdRate}>{formatCentsToCurrency(item.unitPriceCents, invoice.currency || 'USD')}</Text>
-              <Text style={styles.tdTotal}>{formatCentsToCurrency(item.totalCents, invoice.currency || 'USD')}</Text>
+              <Text style={styles.tdRate}>
+                {renderPdfCurrency(item.unitPriceCents, invoice.currency || 'USD')}
+              </Text>
+              <Text style={styles.tdTotal}>
+                {renderPdfCurrency(item.totalCents, invoice.currency || 'USD', { bold: true })}
+              </Text>
             </View>
           ))}
         </View>
@@ -436,7 +495,7 @@ export function InvoicePdfTemplate({ invoice, items, organization, client, resol
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal</Text>
               <Text style={styles.totalValue}>
-                {formatCentsToCurrency(invoice.subtotalCents || 0, invoice.currency || 'USD')}
+                {renderPdfCurrency(invoice.subtotalCents || 0, invoice.currency || 'USD')}
               </Text>
             </View>
 
@@ -444,7 +503,9 @@ export function InvoicePdfTemplate({ invoice, items, organization, client, resol
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Discount</Text>
                 <Text style={styles.totalValue}>
-                  -{formatCentsToCurrency(invoice.discountCents || 0, invoice.currency || 'USD')}
+                  {renderPdfCurrency(invoice.discountCents || 0, invoice.currency || 'USD', {
+                    negative: true,
+                  })}
                 </Text>
               </View>
             ) : null}
@@ -455,7 +516,7 @@ export function InvoicePdfTemplate({ invoice, items, organization, client, resol
                   Tax ({formatBasisPointsToPercent(invoice.taxRateBasisPoints || 0)})
                 </Text>
                 <Text style={styles.totalValue}>
-                  {formatCentsToCurrency(invoice.taxAmountCents || 0, invoice.currency || 'USD')}
+                  {renderPdfCurrency(invoice.taxAmountCents || 0, invoice.currency || 'USD')}
                 </Text>
               </View>
             ) : null}
@@ -463,7 +524,9 @@ export function InvoicePdfTemplate({ invoice, items, organization, client, resol
             <View style={styles.totalRowFinal}>
               <Text style={styles.totalLabelFinal}>Balance Due</Text>
               <Text style={styles.totalValueFinal}>
-                {formatCentsToCurrency(invoice.totalCents || 0, invoice.currency || 'USD')}
+                {renderPdfCurrency(invoice.totalCents || 0, invoice.currency || 'USD', {
+                  bold: true,
+                })}
               </Text>
             </View>
           </View>

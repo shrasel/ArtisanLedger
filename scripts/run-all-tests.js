@@ -437,6 +437,12 @@ const walletPath = path.join(rootDir, 'src/components/settings/BankWalletStack.t
 assert.ok(fs.existsSync(walletPath), 'BankWalletStack.tsx must exist');
 const pdfTemplateSource = fs.readFileSync(path.join(rootDir, 'src/lib/pdf/InvoicePdfTemplate.tsx'), 'utf8');
 assert.ok(pdfTemplateSource.includes('showBankStub'), 'InvoicePdfTemplate must support omitting bank stub');
+assert.ok(
+  pdfTemplateSource.includes('NotoSansBengali') &&
+    fs.existsSync(path.join(rootDir, 'public/fonts/NotoSansBengali-Regular.ttf')) &&
+    fs.existsSync(path.join(rootDir, 'public/fonts/NotoSansBengali-Bold.ttf')),
+  'NotoSansBengali Regular & Bold TTF fonts must be bundled and registered for BDT PDF rendering'
+);
 
 console.log('  ✓ Passed: Multi-bank schema, Apple Wallet stack UI, and PDF bank omission verified.\n');
 
