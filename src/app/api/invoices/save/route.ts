@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/db';
 import { invoices, invoiceItems, organizations } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { generateAccessToken, generatePasscode, hashPasscode } from '@/lib/utils';
+
+const saveInvoiceItemSchema = z.object({
+  description: z.string().max(500, 'Line item description must be 500 characters or fewer').optional().default(''),
+  quantity: z.number().int().min(0).max(9999999).optional().default(1),
+  unitPriceCents: z.number().int().min(0).max(9999999999).optional().default(0),
+  totalCents: z.number().int().min(0).max(999999999999).optional().default(0),
+});
+
+const saveInvoiceSchema = z.object({
+  id: z.string().max(128).optional(),
+  clientId: z.string().min(1, 'Client selection is required').max(128),
+  invoiceNumber: z.string().trim().min(1, 'Invoice number is required').max(80, 'Invoice number must be 80 characters or fewer'),
+  status: z.enum(['DRAFT', 'SENT', 'VIEWED', 'PAID', 'VOID']).optional().default('DRAFT'),
+  issueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid issue date format'),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid due date format'),
+  currency: z.string().min(3).max(6).optional().default('USD'),
+  subtotalCents: z.number().int().min(0).optional().default(0),
+  discountCents: z.number().int().min(0).optional().default(0),
+  taxRateBasisPoints: z.number().int().min(0).max(100000).optional().default(0),
+  taxAmountCents: z.number().int().min(0).optional().default(0),
+  totalCents: z.number().int().min(0).optional().default(0),
+  notes: z.string().max(4000, 'Notes must be 4,000 characters or fewer').nullable().optional(),
+  termsConditions: z.string().max(4000, 'Terms must be 4,000 characters or fewer').nullable().optional(),
+  items: z.array(saveInvoiceItemSchema).max(500, 'Maximum 500 line items per invoice').optional().default([]),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,31 +39,36 @@ export async function POST(req: NextRequest) {
     }
 
     const orgId = session.organization.id;
-    const body = await req.json();
+    const rawBody = await req.json();
+    const parsed = saveInvoiceSchema.safeParse(rawBody);
+
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
+      return NextResponse.json(
+        { error: firstIssue?.message || 'Invalid invoice payload' },
+        { status: 400 }
+      );
+    }
 
     const {
       id,
       clientId,
       invoiceNumber,
-      status = 'DRAFT',
+      status,
       issueDate,
       dueDate,
-      currency = 'USD',
-      subtotalCents = 0,
-      discountCents = 0,
-      taxRateBasisPoints = 0,
-      taxAmountCents = 0,
-      totalCents = 0,
+      currency,
+      subtotalCents,
+      discountCents,
+      taxRateBasisPoints,
+      taxAmountCents,
+      totalCents,
       notes,
       termsConditions,
-      items = [],
-    } = body;
+      items,
+    } = parsed.data;
 
-    if (!clientId) {
-      return NextResponse.json({ error: 'Client selection is required' }, { status: 400 });
-    }
-
-    let savedInvoiceId = id;
+    let savedInvoiceId: string = id ?? '';
 
     if (id) {
       // Update existing

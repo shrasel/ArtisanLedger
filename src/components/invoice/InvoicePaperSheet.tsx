@@ -543,20 +543,23 @@ export function InvoicePaperSheet({
 
         {/* Paper Sheet Header (Document Letterhead — No underline, no status stamp on sheet) */}
         <div className="relative mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
+          <div className="min-w-0">
             {(organization.letterheadTagline ?? 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER') && (
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-1">
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-secondary block mb-1 [overflow-wrap:anywhere]">
                 {organization.letterheadTagline ?? 'ARCHIVAL FINANCIAL DOCUMENT • CERTIFIED LEDGER'}
               </span>
             )}
-            <h1 className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-ink-primary">
+            <h1
+              dir="auto"
+              className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-ink-primary break-words"
+            >
               {organization.letterheadTitle ||
                 organization.companyName ||
                 organization.principalName ||
                 'Artisan Ledger'}
             </h1>
-            <p className="text-xs font-sans text-ink-secondary mt-1 tracking-wide">
-              Document No. <span className="font-mono font-semibold">{invoiceNumber}</span>
+            <p className="text-xs font-sans text-ink-secondary mt-1 tracking-wide [overflow-wrap:anywhere]">
+              Document No. <span className="font-mono font-semibold">{invoiceNumber || '—'}</span>
             </p>
           </div>
         </div>
@@ -564,62 +567,72 @@ export function InvoicePaperSheet({
         {/* Structured Grid Metadata: From & Billed to */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 mb-8 border-b border-bone">
           {/* Sender / From Info */}
-          <div>
+          <div className="min-w-0">
             <h2 className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-ink-secondary mb-3 flex items-center gap-1.5">
-              <Building2 className="w-3 h-3 text-ink-ghost" />
+              <Building2 className="w-3 h-3 text-ink-ghost shrink-0" />
               <span>From</span>
             </h2>
             <div className="space-y-1 text-sm font-sans text-ink-secondary">
               {organization.entityType === 'INDIVIDUAL' ? (
                 <>
-                  <div className="font-serif font-bold text-base text-ink-primary">
+                  <div dir="auto" className="font-serif font-bold text-base text-ink-primary break-words">
                     {organization.principalName || organization.companyName}
                   </div>
                   {organization.companyName &&
                     organization.principalName &&
                     organization.companyName !== organization.principalName && (
-                      <div className="text-xs font-medium text-ink-primary">
+                      <div dir="auto" className="text-xs font-medium text-ink-primary break-words">
                         {organization.companyName}
                       </div>
                     )}
                 </>
               ) : (
                 <>
-                  <div className="font-serif font-bold text-base text-ink-primary">
+                  <div dir="auto" className="font-serif font-bold text-base text-ink-primary break-words">
                     {organization.companyName || organization.principalName}
                   </div>
                   {organization.principalName &&
                     organization.principalName !== organization.companyName && (
-                      <div className="text-xs text-ink-secondary">
+                      <div dir="auto" className="text-xs text-ink-secondary break-words">
                         Principal: {organization.principalName}
                       </div>
                     )}
                 </>
               )}
-              {organization.addressLine && <div>{organization.addressLine}</div>}
-              <div>
-                {[organization.city, organization.state, organization.postalCode].filter(Boolean).join(', ')}
-              </div>
+              {organization.addressLine && (
+                <div dir="auto" className="break-words">
+                  {organization.addressLine}
+                </div>
+              )}
+              {[organization.city, organization.state, organization.postalCode].some(Boolean) && (
+                <div className="break-words">
+                  {[organization.city, organization.state, organization.postalCode].filter(Boolean).join(', ')}
+                </div>
+              )}
               {organization.country && <div>Country: {organization.country}</div>}
               {organization.taxId && (
-                <div className="font-mono text-xs pt-1 text-ink-primary">
+                <div className="font-mono text-xs pt-1 text-ink-primary [overflow-wrap:anywhere]">
                   Tax ID: {organization.taxId}
                 </div>
               )}
               {organization.email && (
-                <div className="text-xs text-ink-secondary">{organization.email}</div>
+                <div className="text-xs text-ink-secondary [overflow-wrap:anywhere]">
+                  {organization.email}
+                </div>
               )}
               {organization.phone && (
-                <div className="text-xs font-mono text-ink-secondary">{organization.phone}</div>
+                <div className="text-xs font-mono text-ink-secondary [overflow-wrap:anywhere]">
+                  {organization.phone}
+                </div>
               )}
             </div>
           </div>
 
           {/* Client / Billed to Info */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-ink-secondary flex items-center gap-1.5">
-                <FileText className="w-3 h-3 text-ink-ghost" />
+                <FileText className="w-3 h-3 text-ink-ghost shrink-0" />
                 <span>Billed to</span>
               </h2>
 
@@ -627,7 +640,7 @@ export function InvoicePaperSheet({
                 <button
                   type="button"
                   onClick={() => setShowAddClient(true)}
-                  className="text-[10px] font-mono uppercase tracking-wider text-ink-secondary hover:text-ink-primary flex items-center gap-1 hover:underline"
+                  className="text-[10px] font-mono uppercase tracking-wider text-ink-secondary hover:text-ink-primary flex items-center gap-1 hover:underline shrink-0"
                 >
                   <Plus className="w-3 h-3" />
                   <span>New Client</span>
@@ -637,13 +650,25 @@ export function InvoicePaperSheet({
 
             {readOnly ? (
               <div className="space-y-1 text-sm font-sans text-ink-secondary">
-                <div className="font-serif font-bold text-base text-ink-primary">
+                <div dir="auto" className="font-serif font-bold text-base text-ink-primary break-words">
                   {activeClient?.companyName || activeClient?.name || '—'}
                 </div>
-                {activeClient?.companyName && <div>Attn: {activeClient?.name}</div>}
-                {activeClient?.address && <div>{activeClient.address}</div>}
-                {activeClient?.email && <div className="text-xs">{activeClient.email}</div>}
-                {activeClient?.phone && <div className="text-xs font-mono">{activeClient.phone}</div>}
+                {activeClient?.companyName && (
+                  <div dir="auto" className="break-words">
+                    Attn: {activeClient?.name}
+                  </div>
+                )}
+                {activeClient?.address && (
+                  <div dir="auto" className="break-words">
+                    {activeClient.address}
+                  </div>
+                )}
+                {activeClient?.email && (
+                  <div className="text-xs [overflow-wrap:anywhere]">{activeClient.email}</div>
+                )}
+                {activeClient?.phone && (
+                  <div className="text-xs font-mono [overflow-wrap:anywhere]">{activeClient.phone}</div>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
@@ -651,7 +676,7 @@ export function InvoicePaperSheet({
                   <select
                     value={selectedClientId}
                     onChange={(e) => setSelectedClientId(e.target.value)}
-                    className="w-full bg-paper-dark border border-bone px-3 py-1.5 text-sm font-serif text-ink-primary rounded-[1px] focus:outline-none focus:border-ink-primary transition-colors"
+                    className="w-full max-w-full truncate bg-paper-dark border border-bone px-3 py-1.5 text-sm font-serif text-ink-primary rounded-[1px] focus:outline-none focus:border-ink-primary transition-colors"
                   >
                     {localClients.map((client) => {
                       const isDef = client.id === organization.defaultClientId || client.isDefault === 1;
@@ -666,10 +691,18 @@ export function InvoicePaperSheet({
                 </div>
 
                 {activeClient && (
-                  <div className="text-xs font-sans text-ink-secondary space-y-0.5 pl-1 border-l-2 border-bone">
-                    <p className="font-semibold text-ink-primary">{activeClient.email}</p>
-                    {activeClient.address && <p>{activeClient.address}</p>}
-                    {activeClient.phone && <p className="font-mono">{activeClient.phone}</p>}
+                  <div className="text-xs font-sans text-ink-secondary space-y-0.5 pl-2 border-l-2 border-bone min-w-0">
+                    <p className="font-semibold text-ink-primary [overflow-wrap:anywhere]">
+                      {activeClient.email}
+                    </p>
+                    {activeClient.address && (
+                      <p dir="auto" className="break-words">
+                        {activeClient.address}
+                      </p>
+                    )}
+                    {activeClient.phone && (
+                      <p className="font-mono [overflow-wrap:anywhere]">{activeClient.phone}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -694,6 +727,7 @@ export function InvoicePaperSheet({
             ) : (
               <input
                 type="text"
+                maxLength={80}
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 className="w-full bg-transparent font-mono text-sm font-bold text-ink-primary border-b border-transparent hover:border-bone focus:border-ink-primary focus:outline-none px-0 py-0.5 mt-0.5"
@@ -800,9 +834,9 @@ export function InvoicePaperSheet({
         <div className="flex flex-col items-end mb-10">
           <div className="w-full max-w-sm space-y-2 border-t border-bone pt-4">
             {/* Subtotal */}
-            <div className="flex justify-between items-center text-xs font-sans text-ink-secondary">
+            <div className="flex justify-between items-center gap-3 text-xs font-sans text-ink-secondary">
               <span>Gross Subtotal</span>
-              <span className="font-mono font-medium text-ink-primary">
+              <span className="font-mono tabular-nums whitespace-nowrap font-medium text-ink-primary">
                 {formatCentsToCurrency(totals.subtotalCents, currency)}
               </span>
             </div>
@@ -902,11 +936,11 @@ export function InvoicePaperSheet({
             </div>
 
             {/* Total Balance Due */}
-            <div className="flex justify-between items-baseline pt-3 border-t-2 border-ink-primary">
+            <div className="flex justify-between items-baseline gap-3 pt-3 border-t-2 border-ink-primary">
               <span className="font-serif text-base font-bold uppercase tracking-wider text-ink-primary">
                 Total Balance Due
               </span>
-              <span className="font-mono text-2xl font-bold text-ink-primary">
+              <span className="font-mono tabular-nums whitespace-nowrap text-xl sm:text-2xl font-bold text-ink-primary">
                 {formatCentsToCurrency(totals.totalCents, currency)}
               </span>
             </div>
@@ -915,40 +949,48 @@ export function InvoicePaperSheet({
 
         {/* NOTES & TERMS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 mb-8 bg-paper-dark/50 border-l-2 border-ink-primary rounded-[1px]">
-          <div>
+          <div className="min-w-0">
             <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block mb-1">
               Instructions & Notes
             </label>
             {readOnly ? (
-              <p className="text-xs font-sans text-ink-secondary leading-relaxed">
+              <p
+                dir="auto"
+                className="text-xs font-sans text-ink-secondary leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]"
+              >
                 {notes || '—'}
               </p>
             ) : (
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={2}
+                rows={3}
+                maxLength={4000}
                 placeholder="Direct wire instructions, reference codes, or remarks..."
-                className="w-full bg-transparent text-xs font-sans text-ink-secondary focus:text-ink-primary placeholder:text-ink-ghost/60 border border-transparent hover:border-bone focus:border-bone focus:bg-paper rounded-[1px] p-1.5 focus:outline-none resize-none transition-colors"
+                className="w-full bg-transparent text-xs font-sans text-ink-secondary focus:text-ink-primary placeholder:text-ink-ghost/60 border border-transparent hover:border-bone focus:border-bone focus:bg-paper rounded-[1px] p-1.5 focus:outline-none resize-y min-h-[60px] transition-colors"
               />
             )}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary block mb-1">
               Terms & Legal Conditions
             </label>
             {readOnly ? (
-              <p className="text-xs font-sans text-ink-secondary leading-relaxed">
+              <p
+                dir="auto"
+                className="text-xs font-sans text-ink-secondary leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]"
+              >
                 {terms || '—'}
               </p>
             ) : (
               <textarea
                 value={terms}
                 onChange={(e) => setTerms(e.target.value)}
-                rows={2}
+                rows={3}
+                maxLength={4000}
                 placeholder="Payment timeline, late fee policies, governing terms..."
-                className="w-full bg-transparent text-xs font-sans text-ink-secondary focus:text-ink-primary placeholder:text-ink-ghost/60 border border-transparent hover:border-bone focus:border-bone focus:bg-paper rounded-[1px] p-1.5 focus:outline-none resize-none transition-colors"
+                className="w-full bg-transparent text-xs font-sans text-ink-secondary focus:text-ink-primary placeholder:text-ink-ghost/60 border border-transparent hover:border-bone focus:border-bone focus:bg-paper rounded-[1px] p-1.5 focus:outline-none resize-y min-h-[60px] transition-colors"
               />
             )}
           </div>
@@ -956,45 +998,45 @@ export function InvoicePaperSheet({
 
         {/* TEAR-OFF WIRE TRANSFER REMITTANCE STUB */}
         <div className="relative pt-4 sm:pt-6">
-          <div className="relative flex items-center justify-center my-4 sm:my-6">
-            <div className="flex-1 border-t border-dashed border-ink-ghost/60" />
-            <span className="bg-paper px-3 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center sm:whitespace-nowrap">
+          <div className="relative flex items-center justify-center my-4 sm:my-6 gap-2">
+            <div className="flex-1 min-w-[16px] border-t border-dashed border-ink-ghost/60" />
+            <span className="bg-paper px-3 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center max-w-full break-words leading-relaxed">
               &bull; {organization.remittanceStubLabel || 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'} &bull;
             </span>
-            <div className="flex-1 border-t border-dashed border-ink-ghost/60" />
+            <div className="flex-1 min-w-[16px] border-t border-dashed border-ink-ghost/60" />
           </div>
 
           <div className="p-3.5 sm:p-5 border border-bone bg-paper-dark/30 rounded-[1px]">
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div>
+              <div className="min-w-0">
                 <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
                   Beneficiary Bank
                 </span>
-                <span className="font-mono text-xs font-semibold text-ink-primary">
+                <span dir="auto" className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
                   {organization.bankName || 'Direct Wire Transfer'}
                 </span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
                   Account Holder
                 </span>
-                <span className="font-mono text-xs font-semibold text-ink-primary">
+                <span dir="auto" className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
                   {organization.accountHolderName || organization.companyName}
                 </span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
                   Routing / Transit / ABA
                 </span>
-                <span className="font-mono text-xs font-semibold text-ink-primary">
+                <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
                   {organization.routingNumber || '—'}
                 </span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
                   Account Number
                 </span>
-                <span className="font-mono text-xs font-semibold text-ink-primary">
+                <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
                   {organization.accountNumber || '—'}
                 </span>
               </div>
@@ -1003,21 +1045,21 @@ export function InvoicePaperSheet({
             {(organization.swiftBic || organization.paymentNotes) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 pt-3 border-t border-bone/60">
                 {organization.swiftBic && (
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
                       SWIFT / BIC Code
                     </span>
-                    <span className="font-mono text-xs font-semibold text-ink-primary">
+                    <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
                       {organization.swiftBic}
                     </span>
                   </div>
                 )}
                 {organization.paymentNotes && (
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
                       Remittance Identifier / Reference
                     </span>
-                    <span className="font-mono text-xs font-semibold text-ink-primary">
+                    <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
                       {organization.paymentNotes}
                     </span>
                   </div>

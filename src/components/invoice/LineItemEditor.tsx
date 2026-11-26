@@ -95,10 +95,10 @@ export function LineItemEditor({
     <div className="w-full">
       {/* Table Header (Visible on Tablet/Desktop >= 640px; Mobile uses per-card labels) */}
       <div className="hidden sm:grid sm:grid-cols-12 gap-2 pb-2 mb-2 border-b border-ink-primary text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary">
-        <div className="sm:col-span-6">Description &amp; Scope of Work</div>
+        <div className="sm:col-span-5">Description &amp; Scope of Work</div>
         <div className="sm:col-span-2 text-center">Qty</div>
         <div className="sm:col-span-2 text-right">Unit Rate</div>
-        <div className="sm:col-span-2 text-right">Amount</div>
+        <div className="sm:col-span-3 text-right">Amount</div>
       </div>
 
       {/* Mobile Section Header (< 640px) */}
@@ -120,16 +120,20 @@ export function LineItemEditor({
               className="py-2.5 sm:py-1.5 border-b border-bone/70 group hover:border-bone transition-colors"
             >
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-2 items-center">
-                {/* Description (Full width on mobile with delete icon; 6 cols on >=640px) */}
-                <div className="sm:col-span-6 flex items-center gap-2">
+                {/* Description (Full width on mobile with delete icon; 5 cols on >=640px) */}
+                <div className="sm:col-span-5 flex items-center gap-2 min-w-0">
                   <div className="flex-1 min-w-0">
                     {readOnly ? (
-                      <div className="text-sm font-serif text-ink-primary leading-snug py-1 break-words">
+                      <div
+                        dir="auto"
+                        className="text-sm font-serif text-ink-primary leading-snug py-1 [overflow-wrap:anywhere]"
+                      >
                         {item.description || '—'}
                       </div>
                     ) : (
                       <input
                         type="text"
+                        maxLength={500}
                         value={item.description}
                         placeholder="e.g. Architectural Schematic Drafts (Stage 1)"
                         onChange={(e) => updateItem(index, { description: e.target.value })}
@@ -152,41 +156,42 @@ export function LineItemEditor({
                   )}
                 </div>
 
-                {/* Numeric Columns: 3-column sub-grid on Mobile, 6 columns across on Tablet/Desktop */}
-                <div className="grid grid-cols-3 sm:col-span-6 sm:grid-cols-6 gap-2 items-center">
+                {/* Numeric Columns: 2-col + full-width Amount row on Mobile, 7 columns across on Tablet/Desktop */}
+                <div className="grid grid-cols-2 sm:col-span-7 sm:grid-cols-7 gap-2 items-center min-w-0">
                   {/* Quantity */}
-                  <div className="col-span-1 sm:col-span-2">
+                  <div className="col-span-1 sm:col-span-2 min-w-0">
                     <span className="sm:hidden text-[9px] font-mono uppercase tracking-wider text-ink-ghost block mb-0.5">
                       Qty
                     </span>
                     {readOnly ? (
-                      <div className="font-mono text-xs text-ink-primary py-1 sm:text-center">
+                      <div className="font-mono tabular-nums text-xs text-ink-primary py-1 sm:text-center">
                         {item.quantity}
                       </div>
                     ) : (
                       <input
                         type="number"
                         min="0"
+                        max="9999999"
                         step="1"
                         value={item.quantity === 0 ? '' : item.quantity}
                         placeholder="1"
                         onChange={(e) => {
                           const val = parseInt(e.target.value, 10);
-                          updateItem(index, { quantity: isNaN(val) ? 0 : val });
+                          updateItem(index, { quantity: isNaN(val) ? 0 : Math.min(9999999, val) });
                         }}
                         onKeyDown={(e) => handleKeyDown(e, index, 'qty')}
-                        className="w-full bg-paper-dark/40 sm:bg-transparent px-2 sm:px-1 py-1.5 sm:py-1 text-xs font-mono text-left sm:text-center text-ink-primary placeholder:text-ink-ghost/60 focus:bg-paper-dark/60 focus:outline-none rounded-[1px] border border-bone/60 sm:border-transparent focus:border-bone transition-all"
+                        className="w-full bg-paper-dark/40 sm:bg-transparent px-2 sm:px-1 py-1.5 sm:py-1 text-xs font-mono tabular-nums text-left sm:text-center text-ink-primary placeholder:text-ink-ghost/60 focus:bg-paper-dark/60 focus:outline-none rounded-[1px] border border-bone/60 sm:border-transparent focus:border-bone transition-all"
                       />
                     )}
                   </div>
 
                   {/* Unit Rate */}
-                  <div className="col-span-1 sm:col-span-2">
+                  <div className="col-span-1 sm:col-span-2 min-w-0">
                     <span className="sm:hidden text-[9px] font-mono uppercase tracking-wider text-ink-ghost block mb-0.5 text-right">
                       Unit Rate
                     </span>
                     {readOnly ? (
-                      <div className="font-mono text-xs text-ink-primary py-1 text-right">
+                      <div className="font-mono tabular-nums text-xs text-ink-primary py-1 text-right">
                         {formatCentsToCurrency(item.unitPriceCents, currency)}
                       </div>
                     ) : (
@@ -219,21 +224,19 @@ export function LineItemEditor({
                           setFocusedRateText('');
                         }}
                         onKeyDown={(e) => handleKeyDown(e, index, 'price')}
-                        className="w-full bg-paper-dark/40 sm:bg-transparent px-2 py-1.5 sm:py-1 text-xs font-mono text-right text-ink-primary placeholder:text-ink-ghost/60 focus:bg-paper-dark/60 focus:outline-none rounded-[1px] border border-bone/60 sm:border-transparent focus:border-bone transition-all"
+                        className="w-full bg-paper-dark/40 sm:bg-transparent px-2 py-1.5 sm:py-1 text-xs font-mono tabular-nums text-right text-ink-primary placeholder:text-ink-ghost/60 focus:bg-paper-dark/60 focus:outline-none rounded-[1px] border border-bone/60 sm:border-transparent focus:border-bone transition-all"
                       />
                     )}
                   </div>
 
                   {/* Total Amount + Desktop Delete */}
-                  <div className="col-span-1 sm:col-span-2 flex items-center justify-end gap-1.5">
-                    <div className="text-right">
-                      <span className="sm:hidden text-[9px] font-mono uppercase tracking-wider text-ink-ghost block mb-0.5">
-                        Amount
-                      </span>
-                      <span className="font-mono text-xs font-semibold text-ink-primary">
-                        {formatCentsToCurrency(item.totalCents, currency)}
-                      </span>
-                    </div>
+                  <div className="col-span-2 sm:col-span-3 flex items-center justify-between sm:justify-end gap-1.5 pt-1.5 sm:pt-0 border-t border-bone/40 sm:border-t-0 min-w-0">
+                    <span className="sm:hidden text-[9px] font-mono uppercase tracking-wider text-ink-ghost">
+                      Amount
+                    </span>
+                    <span className="font-mono tabular-nums whitespace-nowrap text-xs font-semibold text-ink-primary">
+                      {formatCentsToCurrency(item.totalCents, currency)}
+                    </span>
 
                     {!readOnly && (
                       <button

@@ -61,7 +61,7 @@ export function StatusStamp({ status, size = 'md', className }: StatusStampProps
   return (
     <div
       className={cn(
-        'inline-flex items-center justify-center font-mono uppercase select-none rounded-[1px] transition-transform duration-200',
+        'inline-flex items-center justify-center font-mono uppercase select-none rounded-[1px] transition-transform duration-200 whitespace-nowrap shrink-0',
         'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]',
         config.borderClass,
         config.bgClass,
