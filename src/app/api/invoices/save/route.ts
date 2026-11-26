@@ -28,6 +28,8 @@ const saveInvoiceSchema = z.object({
   totalCents: z.number().int().min(0).optional().default(0),
   notes: z.string().max(4000, 'Notes must be 4,000 characters or fewer').nullable().optional(),
   termsConditions: z.string().max(4000, 'Terms must be 4,000 characters or fewer').nullable().optional(),
+  bankAccountId: z.string().max(128).nullable().optional(),
+  showBankDetails: z.boolean().optional().default(true),
   items: z.array(saveInvoiceItemSchema).max(500, 'Maximum 500 line items per invoice').optional().default([]),
 });
 
@@ -65,8 +67,13 @@ export async function POST(req: NextRequest) {
       totalCents,
       notes,
       termsConditions,
+      bankAccountId,
+      showBankDetails,
       items,
     } = parsed.data;
+
+    const showBankFlag = showBankDetails ? 1 : 0;
+    const normalizedBankId = showBankDetails ? bankAccountId || null : null;
 
     let savedInvoiceId: string = id ?? '';
 
@@ -98,6 +105,8 @@ export async function POST(req: NextRequest) {
           totalCents,
           notes,
           termsConditions,
+          bankAccountId: normalizedBankId,
+          showBankDetails: showBankFlag,
         })
         .where(eq(invoices.id, id));
 
@@ -138,6 +147,8 @@ export async function POST(req: NextRequest) {
           totalCents,
           notes,
           termsConditions,
+          bankAccountId: normalizedBankId,
+          showBankDetails: showBankFlag,
           accessToken,
           accessPasscode: hashedPin,
         })

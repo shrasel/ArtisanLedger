@@ -5,6 +5,7 @@ import { invoices, invoiceItems, organizations, clients } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { hasInvoiceViewAccess } from '@/lib/auth';
 import { RecipientPortalView } from './RecipientPortalView';
+import { getOrgBankAccounts } from '@/lib/bankAccounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,8 @@ export default async function ViewInvoicePage({
     return notFound();
   }
 
+  const bankAccountsList = await getOrgBankAccounts(invoice.orgId);
+
   return (
     <RecipientPortalView
       token={token}
@@ -70,6 +73,7 @@ export default async function ViewInvoicePage({
       items={items}
       organization={organization}
       client={client}
+      bankAccountsList={bankAccountsList}
       initiallyUnlocked={initiallyUnlocked}
     />
   );

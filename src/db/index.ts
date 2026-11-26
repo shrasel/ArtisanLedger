@@ -179,6 +179,77 @@ try {
       "ALTER TABLE organizations ADD COLUMN remittance_stub_label TEXT DEFAULT 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS';"
     );
   } catch {}
+
+  // Multi-bank accounts table & per-invoice bank selection migrations
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS bank_accounts (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      label TEXT NOT NULL,
+      bank_name TEXT,
+      account_holder_name TEXT,
+      routing_number TEXT,
+      account_number TEXT,
+      swift_bic TEXT,
+      payment_notes TEXT,
+      is_default INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (CURRENT_TIMESTAMP)
+    );
+    CREATE INDEX IF NOT EXISTS idx_bank_accounts_org ON bank_accounts(org_id);
+  `);
+
+  const invoiceCols = sqlite.prepare('PRAGMA table_info(invoices)').all() as Array<{ name: string }>;
+  if (!invoiceCols.some((c) => c.name === 'bank_account_id')) {
+    sqlite.exec('ALTER TABLE invoices ADD COLUMN bank_account_id TEXT;');
+  }
+  if (!invoiceCols.some((c) => c.name === 'show_bank_details')) {
+    sqlite.exec('ALTER TABLE invoices ADD COLUMN show_bank_details INTEGER DEFAULT 1;');
+  }
+
+  // One-time backfill: migrate legacy organization bank fields into bank_accounts if none exist yet
+  const orgsToMigrate = sqlite
+    .prepare(
+      `SELECT id, bank_name, account_holder_name, routing_number, account_number, swift_bic, payment_notes
+       FROM organizations
+       WHERE (bank_name IS NOT NULL AND bank_name != '')
+          OR (account_number IS NOT NULL AND account_number != '')
+          OR (routing_number IS NOT NULL AND routing_number != '')`
+    )
+    .all() as Array<{
+    id: string;
+    bank_name: string | null;
+    account_holder_name: string | null;
+    routing_number: string | null;
+    account_number: string | null;
+    swift_bic: string | null;
+    payment_notes: string | null;
+  }>;
+
+  for (const org of orgsToMigrate) {
+    const existingCount = sqlite
+      .prepare('SELECT COUNT(*) as cnt FROM bank_accounts WHERE org_id = ?')
+      .get(org.id) as { cnt: number };
+
+    if (existingCount.cnt === 0) {
+      sqlite
+        .prepare(
+          `INSERT INTO bank_accounts (
+            id, org_id, label, bank_name, account_holder_name, routing_number, account_number, swift_bic, payment_notes, is_default
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
+        )
+        .run(
+          crypto.randomUUID(),
+          org.id,
+          org.bank_name ? `${org.bank_name} Primary` : 'Primary Account',
+          org.bank_name,
+          org.account_holder_name,
+          org.routing_number,
+          org.account_number,
+          org.swift_bic,
+          org.payment_notes
+        );
+    }
+  }
 } catch (err: any) {
   if (err?.code !== 'SQLITE_BUSY') {
     console.error('Database init warning:', err);

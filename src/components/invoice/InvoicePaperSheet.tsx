@@ -19,7 +19,8 @@ import {
 import { StatusStamp } from './StatusStamp';
 import { LineItemEditor, type EditableItem } from './LineItemEditor';
 import { DispatchInvoiceModal, type DispatchEmailPayload } from './DispatchInvoiceModal';
-import type { Organization, Client, Invoice } from '@/db/schema';
+import type { Organization, Client, Invoice, BankAccount } from '@/db/schema';
+import { resolveInvoiceBankDetails } from '@/lib/bankDetails';
 import {
   formatCentsToCurrency,
   formatBasisPointsToPercent,
@@ -38,6 +39,7 @@ interface InvoicePaperSheetProps {
   initialItems?: EditableItem[];
   organization: Organization;
   clientsList: Client[];
+  bankAccountsList?: BankAccount[];
   readOnly?: boolean;
   isRecipientView?: boolean;
 }
@@ -47,6 +49,7 @@ export function InvoicePaperSheet({
   initialItems,
   organization,
   clientsList,
+  bankAccountsList = [],
   readOnly = false,
   isRecipientView = false,
 }: InvoicePaperSheetProps) {
@@ -111,6 +114,25 @@ export function InvoicePaperSheet({
   );
   const [terms, setTerms] = useState<string>(
     initialInvoice?.termsConditions ?? ''
+  );
+
+  // Bank / Remittance selection state
+  const defaultBankCandidate =
+    initialInvoice?.bankAccountId ||
+    bankAccountsList.find((b) => b.isDefault === 1)?.id ||
+    bankAccountsList[0]?.id ||
+    '';
+  const [showBankDetails, setShowBankDetails] = useState<boolean>(
+    initialInvoice?.showBankDetails !== 0
+  );
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>(
+    defaultBankCandidate
+  );
+  const activeBank = resolveInvoiceBankDetails(
+    organization,
+    bankAccountsList,
+    selectedBankAccountId,
+    showBankDetails
   );
 
   // Line items state
@@ -214,6 +236,8 @@ export function InvoicePaperSheet({
           totalCents: totals.totalCents,
           notes,
           termsConditions: terms,
+          bankAccountId: showBankDetails ? selectedBankAccountId || null : null,
+          showBankDetails,
           items,
         };
 
@@ -267,6 +291,8 @@ export function InvoicePaperSheet({
           totalCents: totals.totalCents,
           notes,
           termsConditions: terms,
+          bankAccountId: showBankDetails ? selectedBankAccountId || null : null,
+          showBankDetails,
           items,
         };
 
@@ -997,77 +1023,137 @@ export function InvoicePaperSheet({
         </div>
 
         {/* TEAR-OFF WIRE TRANSFER REMITTANCE STUB */}
-        <div className="relative pt-4 sm:pt-6">
-          <div className="relative flex items-center justify-center my-4 sm:my-6 gap-2">
-            <div className="flex-1 min-w-[16px] border-t border-dashed border-ink-ghost/60" />
-            <span className="bg-paper px-3 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center max-w-full break-words leading-relaxed">
-              &bull; {organization.remittanceStubLabel || 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'} &bull;
-            </span>
-            <div className="flex-1 min-w-[16px] border-t border-dashed border-ink-ghost/60" />
-          </div>
-
-          <div className="p-3.5 sm:p-5 border border-bone bg-paper-dark/30 rounded-[1px]">
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="min-w-0">
-                <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
-                  Beneficiary Bank
+        {(!readOnly || activeBank.showBankDetails) && (
+          <div className="relative pt-4 sm:pt-6">
+            {!readOnly && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 mb-2 border-b border-bone/60">
+                <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-ink-secondary">
+                  Bank &amp; Remittance Account
                 </span>
-                <span dir="auto" className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
-                  {organization.bankName || 'Direct Wire Transfer'}
-                </span>
-              </div>
-              <div className="min-w-0">
-                <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
-                  Account Holder
-                </span>
-                <span dir="auto" className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
-                  {organization.accountHolderName || organization.companyName}
-                </span>
-              </div>
-              <div className="min-w-0">
-                <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
-                  Routing / Transit / ABA
-                </span>
-                <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
-                  {organization.routingNumber || '—'}
-                </span>
-              </div>
-              <div className="min-w-0">
-                <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
-                  Account Number
-                </span>
-                <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
-                  {organization.accountNumber || '—'}
-                </span>
-              </div>
-            </div>
-
-            {(organization.swiftBic || organization.paymentNotes) && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 pt-3 border-t border-bone/60">
-                {organization.swiftBic && (
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
-                      SWIFT / BIC Code
-                    </span>
-                    <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
-                      {organization.swiftBic}
-                    </span>
-                  </div>
-                )}
-                {organization.paymentNotes && (
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
-                      Remittance Identifier / Reference
-                    </span>
-                    <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
-                      {organization.paymentNotes}
-                    </span>
-                  </div>
-                )}
+                <select
+                  aria-label="Select Bank Account for Invoice"
+                  value={showBankDetails ? selectedBankAccountId : '__NONE__'}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__NONE__') {
+                      setShowBankDetails(false);
+                    } else {
+                      setShowBankDetails(true);
+                      setSelectedBankAccountId(val);
+                    }
+                  }}
+                  className="bg-paper-dark border border-bone px-2.5 py-1 text-xs font-mono text-ink-primary rounded-[1px] focus:outline-none focus:border-ink-primary max-w-full sm:max-w-xs"
+                >
+                  {bankAccountsList.length > 0 ? (
+                    bankAccountsList.map((acc) => {
+                      const isDef = acc.isDefault === 1;
+                      const detail = acc.bankName ? ` — ${acc.bankName}` : '';
+                      return (
+                        <option key={acc.id} value={acc.id}>
+                          {isDef ? `★ ${acc.label}${detail} [Default]` : `${acc.label}${detail}`}
+                        </option>
+                      );
+                    })
+                  ) : (
+                    <option value="">
+                      {organization.bankName || 'Organization Default Bank Info'}
+                    </option>
+                  )}
+                  <option value="__NONE__">No Bank Info (Omit from Invoice &amp; PDF)</option>
+                </select>
               </div>
             )}
+
+            {!activeBank.showBankDetails ? (
+              !readOnly && (
+                <div className="my-4 p-4 border border-dashed border-bone bg-paper-dark/20 rounded-[1px] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+                  <span className="font-mono text-[11px] text-ink-ghost">
+                    Bank &amp; wire remittance stub omitted for this invoice (hidden on portal &amp; PDF).
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowBankDetails(true)}
+                    className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border border-bone text-ink-secondary hover:text-ink-primary rounded-[1px] shrink-0"
+                  >
+                    Include Bank Info
+                  </button>
+                </div>
+              )
+            ) : (
+              <>
+                <div className="relative flex items-center justify-center my-4 sm:my-6 gap-2">
+                  <div className="flex-1 min-w-[16px] border-t border-dashed border-ink-ghost/60" />
+                  <span className="bg-paper px-3 sm:px-4 font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.25em] text-ink-ghost select-none text-center max-w-full break-words leading-relaxed">
+                    &bull; {organization.remittanceStubLabel || 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'} &bull;
+                  </span>
+                  <div className="flex-1 min-w-[16px] border-t border-dashed border-ink-ghost/60" />
+                </div>
+
+                <div className="p-3.5 sm:p-5 border border-bone bg-paper-dark/30 rounded-[1px]">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
+                        Beneficiary Bank
+                      </span>
+                      <span dir="auto" className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
+                        {activeBank.bankName || 'Direct Wire Transfer'}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
+                        Account Holder
+                      </span>
+                      <span dir="auto" className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
+                        {activeBank.accountHolderName || organization.companyName}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
+                        Routing / Transit / ABA
+                      </span>
+                      <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
+                        {activeBank.routingNumber || '—'}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
+                        Account Number
+                      </span>
+                      <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
+                        {activeBank.accountNumber || '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {(activeBank.swiftBic || activeBank.paymentNotes) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 pt-3 border-t border-bone/60">
+                      {activeBank.swiftBic && (
+                        <div className="min-w-0">
+                          <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
+                            SWIFT / BIC Code
+                          </span>
+                          <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
+                            {activeBank.swiftBic}
+                          </span>
+                        </div>
+                      )}
+                      {activeBank.paymentNotes && (
+                        <div className="min-w-0">
+                          <span className="text-[9px] font-sans uppercase tracking-wider text-ink-ghost block">
+                            Remittance Identifier / Reference
+                          </span>
+                          <span className="font-mono text-xs font-semibold text-ink-primary [overflow-wrap:anywhere] block">
+                            {activeBank.paymentNotes}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* QUICK ADD CLIENT MODAL / DRAWER */}

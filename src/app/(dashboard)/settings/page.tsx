@@ -5,6 +5,7 @@ import { eq, desc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { SettingsForm } from './SettingsForm';
+import { getOrgBankAccounts } from '@/lib/bankAccounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,11 +15,14 @@ export default async function SettingsPage() {
     redirect('/login');
   }
 
-  const clientList = await db
-    .select()
-    .from(clients)
-    .where(eq(clients.orgId, session.organization.id))
-    .orderBy(desc(clients.createdAt));
+  const [clientList, bankAccountsList] = await Promise.all([
+    db
+      .select()
+      .from(clients)
+      .where(eq(clients.orgId, session.organization.id))
+      .orderBy(desc(clients.createdAt)),
+    getOrgBankAccounts(session.organization.id),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -38,6 +42,7 @@ export default async function SettingsPage() {
       <SettingsForm
         organization={session.organization}
         clientsList={clientList}
+        initialBankAccounts={bankAccountsList}
       />
     </div>
   );

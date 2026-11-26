@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { NewInvoiceClientView } from './NewInvoiceClientView';
+import { getOrgBankAccounts } from '@/lib/bankAccounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,10 +49,13 @@ export default async function NewInvoicePage({
     clientList.find((c) => c.isDefault === 1)?.id ||
     clientList[0]?.id;
 
+  const bankAccountsList = await getOrgBankAccounts(orgId);
+
   return (
     <NewInvoiceClientView
       organization={session.organization}
       clientsList={clientList}
+      bankAccountsList={bankAccountsList}
       initialClientId={targetClientId}
     />
   );

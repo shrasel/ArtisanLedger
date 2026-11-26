@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import type { Invoice, InvoiceItem, Organization, Client } from '@/db/schema';
+import type { ResolvedBankDetails } from '@/lib/bankDetails';
 import { formatCentsToCurrency, formatEditorialDate, formatBasisPointsToPercent } from '../utils';
 
 const styles = StyleSheet.create({
@@ -311,9 +312,21 @@ interface InvoicePdfProps {
   items: InvoiceItem[];
   organization: Organization;
   client: Client;
+  resolvedBank?: ResolvedBankDetails;
 }
 
-export function InvoicePdfTemplate({ invoice, items, organization, client }: InvoicePdfProps) {
+export function InvoicePdfTemplate({ invoice, items, organization, client, resolvedBank }: InvoicePdfProps) {
+  const showBankStub = resolvedBank
+    ? resolvedBank.showBankDetails
+    : invoice.showBankDetails !== 0;
+  const activeBank = resolvedBank || {
+    bankName: organization.bankName,
+    accountHolderName: organization.accountHolderName,
+    routingNumber: organization.routingNumber,
+    accountNumber: organization.accountNumber,
+    swiftBic: organization.swiftBic,
+    paymentNotes: organization.paymentNotes,
+  };
   return (
     <Document title={`Invoice ${invoice.invoiceNumber}`} author={organization.companyName}>
       <Page size="LETTER" style={styles.page}>
@@ -474,50 +487,54 @@ export function InvoicePdfTemplate({ invoice, items, organization, client }: Inv
           </View>
         )}
 
-        {/* Tear-off Bank Wire Stub */}
-        <View style={styles.stubDivider} />
-        <Text style={styles.stubTitle}>
-          --- {organization.remittanceStubLabel || 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'} ---
-        </Text>
+        {/* Tear-off Bank Wire Stub (Omitted when showBankDetails is disabled) */}
+        {showBankStub && (
+          <>
+            <View style={styles.stubDivider} />
+            <Text style={styles.stubTitle}>
+              --- {organization.remittanceStubLabel || 'TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS'} ---
+            </Text>
 
-        <View style={styles.remittanceBox}>
-          <View style={styles.wireRow}>
-            <View style={styles.wireCol}>
-              <Text style={styles.wireLabel}>Beneficiary Bank</Text>
-              <Text style={styles.wireValue}>{organization.bankName || 'Direct Wire Transfer'}</Text>
-            </View>
-            <View style={styles.wireCol}>
-              <Text style={styles.wireLabel}>Account Holder</Text>
-              <Text style={styles.wireValue}>{organization.accountHolderName || organization.companyName}</Text>
-            </View>
-          </View>
-          <View style={styles.wireRow}>
-            <View style={styles.wireCol}>
-              <Text style={styles.wireLabel}>Routing / Transit / ABA</Text>
-              <Text style={styles.wireValue}>{organization.routingNumber || '—'}</Text>
-            </View>
-            <View style={styles.wireCol}>
-              <Text style={styles.wireLabel}>Account Number</Text>
-              <Text style={styles.wireValue}>{organization.accountNumber || '—'}</Text>
-            </View>
-          </View>
-          {(organization.swiftBic || organization.paymentNotes) && (
-            <View style={styles.wireRow}>
-              {organization.swiftBic && (
+            <View style={styles.remittanceBox}>
+              <View style={styles.wireRow}>
                 <View style={styles.wireCol}>
-                  <Text style={styles.wireLabel}>SWIFT / BIC</Text>
-                  <Text style={styles.wireValue}>{organization.swiftBic}</Text>
+                  <Text style={styles.wireLabel}>Beneficiary Bank</Text>
+                  <Text style={styles.wireValue}>{activeBank.bankName || 'Direct Wire Transfer'}</Text>
+                </View>
+                <View style={styles.wireCol}>
+                  <Text style={styles.wireLabel}>Account Holder</Text>
+                  <Text style={styles.wireValue}>{activeBank.accountHolderName || organization.companyName}</Text>
+                </View>
+              </View>
+              <View style={styles.wireRow}>
+                <View style={styles.wireCol}>
+                  <Text style={styles.wireLabel}>Routing / Transit / ABA</Text>
+                  <Text style={styles.wireValue}>{activeBank.routingNumber || '—'}</Text>
+                </View>
+                <View style={styles.wireCol}>
+                  <Text style={styles.wireLabel}>Account Number</Text>
+                  <Text style={styles.wireValue}>{activeBank.accountNumber || '—'}</Text>
+                </View>
+              </View>
+              {(activeBank.swiftBic || activeBank.paymentNotes) && (
+                <View style={styles.wireRow}>
+                  {activeBank.swiftBic && (
+                    <View style={styles.wireCol}>
+                      <Text style={styles.wireLabel}>SWIFT / BIC</Text>
+                      <Text style={styles.wireValue}>{activeBank.swiftBic}</Text>
+                    </View>
+                  )}
+                  {activeBank.paymentNotes && (
+                    <View style={styles.wireCol}>
+                      <Text style={styles.wireLabel}>Payment Reference</Text>
+                      <Text style={styles.wireValue}>{activeBank.paymentNotes}</Text>
+                    </View>
+                  )}
                 </View>
               )}
-              {organization.paymentNotes && (
-                <View style={styles.wireCol}>
-                  <Text style={styles.wireLabel}>Payment Reference</Text>
-                  <Text style={styles.wireValue}>{organization.paymentNotes}</Text>
-                </View>
-              )}
             </View>
-          )}
-        </View>
+          </>
+        )}
       </Page>
     </Document>
   );

@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Landmark, Settings2, Save, Check, Loader2, FileText, User, Mail } from 'lucide-react';
-import type { Organization, Client } from '@/db/schema';
+import type { Organization, Client, BankAccount } from '@/db/schema';
+import { BankWalletStack } from '@/components/settings/BankWalletStack';
 import {
   parsePercentToBasisPoints,
   formatInvoiceNumber,
@@ -16,9 +17,14 @@ import {
 interface SettingsFormProps {
   organization: Organization;
   clientsList?: Client[];
+  initialBankAccounts?: BankAccount[];
 }
 
-export function SettingsForm({ organization, clientsList = [] }: SettingsFormProps) {
+export function SettingsForm({
+  organization,
+  clientsList = [],
+  initialBankAccounts = [],
+}: SettingsFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -572,110 +578,40 @@ export function SettingsForm({ organization, clientsList = [] }: SettingsFormPro
           </div>
         </div>
 
-        {/* SECTION 4: WIRE REMITTANCE INSTRUCTIONS */}
-        <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 flex flex-col justify-between space-y-4 h-full">
+        {/* SECTION 4: WIRE REMITTANCE INSTRUCTIONS (APPLE WALLET STACK) */}
+        <div className="bg-obsidian-light border border-obsidian-border rounded-[2px] p-5 sm:p-6 flex flex-col justify-between space-y-5 h-full">
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-obsidian-border text-paper">
               <Landmark className="w-4 h-4 text-status-brass shrink-0" />
               <div>
                 <h2 className="font-serif text-lg font-bold leading-none">
-                  Banking &amp; Wire Remittance Stub
+                  Banking &amp; Wire Accounts Wallet
                 </h2>
                 <span className="text-[10px] font-sans text-bone-dark block mt-1">
-                  Printed on the tear-off remittance advice at the bottom of every invoice.
+                  Manage multiple bank accounts. The default account is used automatically on new invoices.
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Beneficiary Bank Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.bankName}
-                  onChange={(e) => handleChange('bankName', e.target.value)}
-                  placeholder="e.g. JPMorgan Chase"
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-              </div>
+            <BankWalletStack
+              initialAccounts={initialBankAccounts}
+              defaultHolderName={formData.companyName || formData.principalName}
+            />
 
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Account Holder Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.accountHolderName}
-                  onChange={(e) => handleChange('accountHolderName', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Routing Number (ABA)
-                </label>
-                <input
-                  type="text"
-                  value={formData.routingNumber}
-                  onChange={(e) => handleChange('routingNumber', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  value={formData.accountNumber}
-                  onChange={(e) => handleChange('accountNumber', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  SWIFT / BIC (International Wire)
-                </label>
-                <input
-                  type="text"
-                  value={formData.swiftBic}
-                  onChange={(e) => handleChange('swiftBic', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Payment Memo Reference Instructions
-                </label>
-                <input
-                  type="text"
-                  value={formData.paymentNotes}
-                  onChange={(e) => handleChange('paymentNotes', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
-                  Perforation Stub Header Label (Tear-Off Banner Text)
-                </label>
-                <input
-                  type="text"
-                  placeholder="TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS"
-                  value={formData.remittanceStubLabel}
-                  onChange={(e) => handleChange('remittanceStubLabel', e.target.value)}
-                  className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
-                />
-                <span className="text-[10px] font-sans text-ink-ghost block mt-1">
-                  Customizes the divider banner text printed across the bottom tear-off section of the invoice and PDF.
-                </span>
-              </div>
+            <div className="pt-3 border-t border-obsidian-border">
+              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                Perforation Stub Header Label (Tear-Off Banner Text)
+              </label>
+              <input
+                type="text"
+                placeholder="TEAR-OFF REMITTANCE ADVICE / WIRE INSTRUCTIONS"
+                value={formData.remittanceStubLabel}
+                onChange={(e) => handleChange('remittanceStubLabel', e.target.value)}
+                className="w-full bg-obsidian border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone transition-colors"
+              />
+              <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                Customizes the divider banner text printed across the bottom tear-off section of the invoice and PDF.
+              </span>
             </div>
           </div>
         </div>

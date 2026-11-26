@@ -67,10 +67,26 @@ export const clients = sqliteTable('clients', {
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),
 });
 
+export const bankAccounts = sqliteTable('bank_accounts', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  orgId: text('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  label: text('label').notNull(),
+  bankName: text('bank_name'),
+  accountHolderName: text('account_holder_name'),
+  routingNumber: text('routing_number'),
+  accountNumber: text('account_number'),
+  swiftBic: text('swift_bic'),
+  paymentNotes: text('payment_notes'),
+  isDefault: integer('is_default').default(0),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),
+});
+
 export const invoices = sqliteTable('invoices', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   orgId: text('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
   clientId: text('client_id').notNull().references(() => clients.id),
+  bankAccountId: text('bank_account_id').references(() => bankAccounts.id, { onDelete: 'set null' }),
+  showBankDetails: integer('show_bank_details').default(1),
   invoiceNumber: text('invoice_number').notNull(),
   status: text('status', { enum: ['DRAFT', 'SENT', 'VIEWED', 'PAID', 'VOID'] }).default('DRAFT'),
   issueDate: text('issue_date').notNull(), // YYYY-MM-DD
@@ -111,6 +127,8 @@ export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
+export type BankAccount = typeof bankAccounts.$inferSelect;
+export type NewBankAccount = typeof bankAccounts.$inferInsert;
 export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceItem = typeof invoiceItems.$inferSelect;

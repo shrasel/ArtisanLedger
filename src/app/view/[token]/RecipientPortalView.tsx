@@ -5,7 +5,7 @@ import { PinChallenge } from '@/components/invoice/PinChallenge';
 import { InvoicePaperSheet } from '@/components/invoice/InvoicePaperSheet';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { ArtisanLogo } from '@/components/brand/ArtisanLogo';
-import type { Invoice, InvoiceItem, Organization, Client } from '@/db/schema';
+import type { Invoice, InvoiceItem, Organization, Client, BankAccount } from '@/db/schema';
 
 interface RecipientPortalViewProps {
   token: string;
@@ -13,6 +13,7 @@ interface RecipientPortalViewProps {
   items: InvoiceItem[];
   organization: Organization;
   client: Client;
+  bankAccountsList?: BankAccount[];
   initiallyUnlocked: boolean;
 }
 
@@ -22,6 +23,7 @@ export function RecipientPortalView({
   items,
   organization,
   client,
+  bankAccountsList = [],
   initiallyUnlocked,
 }: RecipientPortalViewProps) {
   const [unlocked, setUnlocked] = useState(initiallyUnlocked);
@@ -58,6 +60,7 @@ export function RecipientPortalView({
             initialItems={items}
             organization={organization}
             clientsList={[client]}
+            bankAccountsList={bankAccountsList}
             readOnly={true}
             isRecipientView={true}
           />

@@ -6,6 +6,7 @@ import { invoices, invoiceItems, organizations, clients } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getSession, hasInvoiceViewAccess } from '@/lib/auth';
 import { InvoicePdfTemplate } from '@/lib/pdf/InvoicePdfTemplate';
+import { getOrgBankAccounts, resolveInvoiceBankDetails } from '@/lib/bankAccounts';
 
 export async function GET(
   req: NextRequest,
@@ -63,12 +64,21 @@ export async function GET(
       return new NextResponse('Invoice metadata incomplete', { status: 500 });
     }
 
+    const bankAccountsList = await getOrgBankAccounts(invoice.orgId);
+    const resolvedBank = resolveInvoiceBankDetails(
+      organization,
+      bankAccountsList,
+      invoice.bankAccountId,
+      invoice.showBankDetails
+    );
+
     // Render PDF to buffer
     const pdfDocument = React.createElement(InvoicePdfTemplate, {
       invoice,
       items,
       organization,
       client,
+      resolvedBank,
     }) as unknown as React.ReactElement<any>;
 
     const pdfBuffer = await renderToBuffer(pdfDocument);

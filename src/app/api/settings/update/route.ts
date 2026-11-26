@@ -42,12 +42,16 @@ export async function POST(req: NextRequest) {
         invoicePrefix: body.invoicePrefix || 'INV-',
         nextInvoiceNumber: parseInt(body.nextInvoiceNumber, 10) || 1001,
         defaultTaxRateBasisPoints: parseInt(body.defaultTaxRateBasisPoints, 10) || 0,
-        bankName: body.bankName || null,
-        accountHolderName: body.accountHolderName || null,
-        routingNumber: body.routingNumber || null,
-        accountNumber: body.accountNumber || null,
-        swiftBic: body.swiftBic || null,
-        paymentNotes: body.paymentNotes || null,
+        bankName: body.bankName !== undefined ? body.bankName || null : session.organization.bankName,
+        accountHolderName:
+          body.accountHolderName !== undefined ? body.accountHolderName || null : session.organization.accountHolderName,
+        routingNumber:
+          body.routingNumber !== undefined ? body.routingNumber || null : session.organization.routingNumber,
+        accountNumber:
+          body.accountNumber !== undefined ? body.accountNumber || null : session.organization.accountNumber,
+        swiftBic: body.swiftBic !== undefined ? body.swiftBic || null : session.organization.swiftBic,
+        paymentNotes:
+          body.paymentNotes !== undefined ? body.paymentNotes || null : session.organization.paymentNotes,
         remittanceStubLabel: body.remittanceStubLabel ?? null,
         resendApiKey: body.resendApiKey !== undefined ? body.resendApiKey || null : session.organization.resendApiKey,
         emailDeliveryProvider: body.emailDeliveryProvider || 'RESEND',

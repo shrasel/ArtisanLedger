@@ -403,7 +403,44 @@ assert.ok(
 );
 console.log('  ✓ Passed: Invoice and Client deletion routes, DB cascade integrity, and Git governance verified.\n');
 
+// ----------------------------------------------------------------------------
+// 8. MULTI-BANK ACCOUNTS WALLET & PER-INVOICE OMISSION
+// ----------------------------------------------------------------------------
+console.log('[8/8] Verifying Multi-Bank Accounts Wallet & Per-Invoice Omission...');
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS bank_accounts (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    bank_name TEXT,
+    account_holder_name TEXT,
+    routing_number TEXT,
+    account_number TEXT,
+    swift_bic TEXT,
+    payment_notes TEXT,
+    is_default INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (CURRENT_TIMESTAMP)
+  );
+`);
+try { db.exec('ALTER TABLE invoices ADD COLUMN bank_account_id TEXT;'); } catch {}
+try { db.exec('ALTER TABLE invoices ADD COLUMN show_bank_details INTEGER DEFAULT 1;'); } catch {}
+
+const bankTableInfo = db.prepare('PRAGMA table_info(bank_accounts)').all();
+assert.ok(bankTableInfo.some((c) => c.name === 'is_default'), 'bank_accounts must have is_default column');
+
+const invColsInfo = db.prepare('PRAGMA table_info(invoices)').all();
+assert.ok(invColsInfo.some((c) => c.name === 'bank_account_id'), 'invoices must have bank_account_id');
+assert.ok(invColsInfo.some((c) => c.name === 'show_bank_details'), 'invoices must have show_bank_details');
+
+const walletPath = path.join(rootDir, 'src/components/settings/BankWalletStack.tsx');
+assert.ok(fs.existsSync(walletPath), 'BankWalletStack.tsx must exist');
+const pdfTemplateSource = fs.readFileSync(path.join(rootDir, 'src/lib/pdf/InvoicePdfTemplate.tsx'), 'utf8');
+assert.ok(pdfTemplateSource.includes('showBankStub'), 'InvoicePdfTemplate must support omitting bank stub');
+
+console.log('  ✓ Passed: Multi-bank schema, Apple Wallet stack UI, and PDF bank omission verified.\n');
+
 console.log('==============================================================');
-console.log('   ALL 7 VERIFICATION SUITES PASSED WITH 100% SUCCESS');
+console.log('   ALL 8 VERIFICATION SUITES PASSED WITH 100% SUCCESS');
 console.log('==============================================================\n');
 

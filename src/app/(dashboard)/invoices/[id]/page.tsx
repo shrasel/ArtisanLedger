@@ -5,6 +5,7 @@ import { invoices, invoiceItems, clients } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { InvoiceEditView } from './InvoiceEditView';
+import { getOrgBankAccounts } from '@/lib/bankAccounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +41,11 @@ export default async function InvoiceDetailPage({
     .where(eq(invoiceItems.invoiceId, invoice.id))
     .orderBy(invoiceItems.sortOrder);
 
-  // Fetch clients
-  const clientList = await db.select().from(clients).where(eq(clients.orgId, orgId));
+  // Fetch clients & bank accounts
+  const [clientList, bankAccountsList] = await Promise.all([
+    db.select().from(clients).where(eq(clients.orgId, orgId)),
+    getOrgBankAccounts(orgId),
+  ]);
 
   return (
     <InvoiceEditView
@@ -49,6 +53,7 @@ export default async function InvoiceDetailPage({
       items={items}
       organization={session.organization}
       clientsList={clientList}
+      bankAccountsList={bankAccountsList}
     />
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { InvoicePaperSheet } from '@/components/invoice/InvoicePaperSheet';
 import { InvoiceCopilotBar } from '@/components/agent/InvoiceCopilotBar';
-import type { Organization, Client, Invoice, InvoiceItem } from '@/db/schema';
+import type { Organization, Client, Invoice, InvoiceItem, BankAccount } from '@/db/schema';
 import type { EditableItem } from '@/components/invoice/LineItemEditor';
 import { getRelativeDateString } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ interface InvoiceEditViewProps {
   items: InvoiceItem[];
   organization: Organization;
   clientsList: Client[];
+  bankAccountsList?: BankAccount[];
 }
 
 export function InvoiceEditView({
@@ -19,6 +20,7 @@ export function InvoiceEditView({
   items: initialItems,
   organization,
   clientsList: initialClients,
+  bankAccountsList = [],
 }: InvoiceEditViewProps) {
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [activeInvoice, setActiveInvoice] = useState<Invoice>(invoice);
@@ -102,6 +104,7 @@ export function InvoiceEditView({
         initialItems={items}
         organization={organization}
         clientsList={clients}
+        bankAccountsList={bankAccountsList}
       />
     </div>
   );

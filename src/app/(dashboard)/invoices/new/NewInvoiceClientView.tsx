@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { InvoicePaperSheet } from '@/components/invoice/InvoicePaperSheet';
 import { InvoiceCopilotBar } from '@/components/agent/InvoiceCopilotBar';
-import type { Organization, Client } from '@/db/schema';
+import type { Organization, Client, BankAccount } from '@/db/schema';
 import type { EditableItem } from '@/components/invoice/LineItemEditor';
 import {
   getRelativeDateString,
@@ -15,12 +15,14 @@ import {
 interface NewInvoiceClientViewProps {
   organization: Organization;
   clientsList: Client[];
+  bankAccountsList?: BankAccount[];
   initialClientId?: string;
 }
 
 export function NewInvoiceClientView({
   organization,
   clientsList: initialClients,
+  bankAccountsList = [],
   initialClientId,
 }: NewInvoiceClientViewProps) {
   const [clients, setClients] = useState<Client[]>(initialClients);
@@ -156,6 +158,7 @@ export function NewInvoiceClientView({
         initialItems={items}
         organization={organization}
         clientsList={clients}
+        bankAccountsList={bankAccountsList}
       />
     </div>
   );

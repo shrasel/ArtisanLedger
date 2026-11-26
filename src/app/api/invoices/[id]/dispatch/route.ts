@@ -14,6 +14,7 @@ import {
 } from '@/lib/utils';
 import { sendInvoiceEmail } from '@/lib/email';
 import { InvoicePdfTemplate } from '@/lib/pdf/InvoicePdfTemplate';
+import { getOrgBankAccounts, resolveInvoiceBankDetails } from '@/lib/bankAccounts';
 
 export async function POST(
   req: NextRequest,
@@ -110,12 +111,20 @@ export async function POST(
     let pdfBuffer: Buffer | undefined;
     try {
       const updatedInvoice = { ...invoice, status: 'SENT' as const, accessToken };
+      const bankAccountsList = await getOrgBankAccounts(invoice.orgId);
+      const resolvedBank = resolveInvoiceBankDetails(
+        session.organization,
+        bankAccountsList,
+        updatedInvoice.bankAccountId,
+        updatedInvoice.showBankDetails
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pdfDocument = React.createElement(InvoicePdfTemplate, {
         invoice: updatedInvoice,
         items,
         organization: session.organization,
         client,
+        resolvedBank,
       }) as unknown as React.ReactElement<any>;
       pdfBuffer = await renderToBuffer(pdfDocument);
     } catch (pdfErr) {
