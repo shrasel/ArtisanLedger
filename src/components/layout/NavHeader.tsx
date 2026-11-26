@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Plus, FileText, Settings, LogOut } from 'lucide-react';
+import { FileText, Settings, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { logoutAction } from '@/app/(auth)/actions';
 import { ArtisanLogo } from '@/components/brand/ArtisanLogo';
@@ -78,15 +78,6 @@ export function NavHeader({ companyName }: NavHeaderProps) {
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <ThemeToggle />
 
-            <Link
-              href="/invoices/new"
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-mono uppercase tracking-wider text-obsidian bg-bone hover:bg-paper font-semibold rounded-[2px] transition-all shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden xs:inline sm:inline">Draft Invoice</span>
-              <span className="inline xs:hidden sm:hidden">New</span>
-            </Link>
-
             <form action={logoutAction}>
               <button
                 type="submit"
@@ -103,7 +94,7 @@ export function NavHeader({ companyName }: NavHeaderProps) {
         {/* Mobile Navigation Strip (Visible on iPhone / Android < 768px) */}
         <nav
           aria-label="Mobile Navigation"
-          className="md:hidden grid grid-cols-3 gap-1 py-1.5 border-t border-obsidian-border/70 font-mono text-[11px] uppercase tracking-wider"
+          className="md:hidden grid grid-cols-2 gap-1 py-1.5 border-t border-obsidian-border/70 font-mono text-[11px] uppercase tracking-wider"
         >
           {navItems.map((item) => {
             const Icon = item.icon;

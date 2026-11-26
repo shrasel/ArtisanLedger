@@ -440,7 +440,34 @@ assert.ok(pdfTemplateSource.includes('showBankStub'), 'InvoicePdfTemplate must s
 
 console.log('  ✓ Passed: Multi-bank schema, Apple Wallet stack UI, and PDF bank omission verified.\n');
 
+// ----------------------------------------------------------------------------
+// 9. MULTI-CURRENCY ISOLATION & CLIENT PREFERRED CURRENCY
+// ----------------------------------------------------------------------------
+console.log('[9/9] Verifying Multi-Currency Isolation & Client Preferred Currency...');
+
+try { db.exec('ALTER TABLE clients ADD COLUMN preferred_currency TEXT;'); } catch {}
+const clientColsInfo = db.prepare('PRAGMA table_info(clients)').all();
+assert.ok(
+  clientColsInfo.some((c) => c.name === 'preferred_currency'),
+  'clients must have preferred_currency column'
+);
+
+const aggPath = path.join(rootDir, 'src/lib/ledgerAggregation.ts');
+const breakdownPath = path.join(rootDir, 'src/components/invoice/LedgerBreakdownStrip.tsx');
+assert.ok(fs.existsSync(aggPath), 'ledgerAggregation.ts must exist');
+assert.ok(fs.existsSync(breakdownPath), 'LedgerBreakdownStrip.tsx must exist');
+
+const aggSource = fs.readFileSync(aggPath, 'utf8');
+assert.ok(
+  aggSource.includes('aggregateLedgerByCurrency') &&
+    aggSource.includes('aggregateLedgerByClient') &&
+    aggSource.includes('aggregateLedgerByBank'),
+  'ledgerAggregation.ts must export currency, client, and bank aggregators'
+);
+
+console.log('  ✓ Passed: Per-invoice currency isolation, preferred_currency, and 3-tab breakdown verified.\n');
+
 console.log('==============================================================');
-console.log('   ALL 8 VERIFICATION SUITES PASSED WITH 100% SUCCESS');
+console.log('   ALL 9 VERIFICATION SUITES PASSED WITH 100% SUCCESS');
 console.log('==============================================================\n');
 

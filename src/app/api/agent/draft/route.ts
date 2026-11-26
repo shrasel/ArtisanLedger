@@ -29,6 +29,7 @@ function parseIntentFallback(prompt: string): DraftInvoiceToolResult {
   // Detect currency (guarding against CAD drafting / CAD modeling)
   if (/\b(eur|euro|€)\b/i.test(prompt)) result.currency = 'EUR';
   else if (/\b(gbp|pound|£)\b/i.test(prompt)) result.currency = 'GBP';
+  else if (/\b(bdt|taka)\b/i.test(prompt) || prompt.includes('৳')) result.currency = 'BDT';
   else if (
     /\b(?:cad\s*\$|c\$|cad\s+dollars?)\b/i.test(prompt) ||
     (/\bcad\b/i.test(prompt) && !/\bcad\s+(?:draft|model|design|file|software|drawing|plan)/i.test(prompt))

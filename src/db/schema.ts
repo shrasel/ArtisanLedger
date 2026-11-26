@@ -63,6 +63,7 @@ export const clients = sqliteTable('clients', {
   email: text('email').notNull(),
   address: text('address'),
   phone: text('phone'),
+  preferredCurrency: text('preferred_currency'),
   isDefault: integer('is_default').default(0),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),
 });

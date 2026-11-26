@@ -701,7 +701,16 @@ export function InvoicePaperSheet({
                 <div className="relative">
                   <select
                     value={selectedClientId}
-                    onChange={(e) => setSelectedClientId(e.target.value)}
+                    onChange={(e) => {
+                      const nextId = e.target.value;
+                      setSelectedClientId(nextId);
+                      if (!invoiceId) {
+                        const matched = localClients.find((c) => c.id === nextId);
+                        if (matched?.preferredCurrency) {
+                          setCurrency(matched.preferredCurrency);
+                        }
+                      }
+                    }}
                     className="w-full max-w-full truncate bg-paper-dark border border-bone px-3 py-1.5 text-sm font-serif text-ink-primary rounded-[1px] focus:outline-none focus:border-ink-primary transition-colors"
                   >
                     {localClients.map((client) => {
@@ -841,6 +850,7 @@ export function InvoicePaperSheet({
                 <option value="CAD">CAD ($)</option>
                 <option value="AUD">AUD ($)</option>
                 <option value="CHF">CHF</option>
+                <option value="BDT">BDT (৳)</option>
               </select>
             </div>
           )}

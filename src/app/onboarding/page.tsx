@@ -226,6 +226,9 @@ export default function OnboardingPage() {
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
                     <option value="CAD">CAD ($)</option>
+                    <option value="AUD">AUD ($)</option>
+                    <option value="CHF">CHF</option>
+                    <option value="BDT">BDT (৳)</option>
                   </select>
                 </div>
 

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const orgId = session.organization.id;
-    const { id, name, email, companyName, address, phone, isDefault } = await req.json();
+    const { id, name, email, companyName, address, phone, preferredCurrency, isDefault } = await req.json();
 
     if (!id || !name || !email) {
       return NextResponse.json({ error: 'Client ID, name, and email are required' }, { status: 400 });
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         companyName: companyName || null,
         address: address || null,
         phone: phone || null,
+        preferredCurrency: preferredCurrency || null,
         isDefault: isDefault ? 1 : 0,
       })
       .where(eq(clients.id, id));

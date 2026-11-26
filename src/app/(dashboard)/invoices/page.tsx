@@ -6,6 +6,13 @@ import { eq, desc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { StatusStamp } from '@/components/invoice/StatusStamp';
 import { DeleteInvoiceButton } from '@/components/invoice/DeleteInvoiceButton';
+import { LedgerBreakdownStrip } from '@/components/invoice/LedgerBreakdownStrip';
+import { getOrgBankAccounts } from '@/lib/bankAccounts';
+import {
+  aggregateLedgerByCurrency,
+  aggregateLedgerByClient,
+  aggregateLedgerByBank,
+} from '@/lib/ledgerAggregation';
 import { formatCentsToCurrency, formatEditorialDate } from '@/lib/utils';
 import { Plus, Download, ExternalLink, ArrowUpRight, FileSpreadsheet } from 'lucide-react';
 
@@ -14,42 +21,54 @@ export const dynamic = 'force-dynamic';
 export default async function InvoicesListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; currency?: string; page?: string }>;
 }) {
   const session = await getSession();
   if (!session || !session.organization) return null;
 
-  const { status: filterStatus, page: rawPage } = await searchParams;
+  const { status: filterStatus, currency: filterCurrency, page: rawPage } = await searchParams;
   const orgId = session.organization.id;
+  const orgDefaultCurrency = session.organization.defaultCurrency || 'USD';
 
-  // Fetch all invoices for org
-  const allInvoices = await db
-    .select({
-      invoice: invoices,
-      client: clients,
-    })
-    .from(invoices)
-    .leftJoin(clients, eq(invoices.clientId, clients.id))
-    .where(eq(invoices.orgId, orgId))
-    .orderBy(desc(invoices.createdAt));
+  // Fetch all invoices & bank accounts for org
+  const [allInvoices, bankAccountsList] = await Promise.all([
+    db
+      .select({
+        invoice: invoices,
+        client: clients,
+      })
+      .from(invoices)
+      .leftJoin(clients, eq(invoices.clientId, clients.id))
+      .where(eq(invoices.orgId, orgId))
+      .orderBy(desc(invoices.createdAt)),
+    getOrgBankAccounts(orgId),
+  ]);
 
-  // Compute financial metrics
-  const totalOutstandingCents = allInvoices
-    .filter((row) => ['SENT', 'VIEWED', 'DRAFT'].includes(row.invoice.status || ''))
-    .reduce((sum, row) => sum + (row.invoice.totalCents || 0), 0);
+  const allCurrencyBuckets = aggregateLedgerByCurrency(allInvoices, orgDefaultCurrency);
+  const normalizedCurrencyFilter = filterCurrency ? filterCurrency.toUpperCase() : undefined;
 
-  const totalPaidCents = allInvoices
-    .filter((row) => row.invoice.status === 'PAID')
-    .reduce((sum, row) => sum + (row.invoice.totalCents || 0), 0);
+  const currencyFilteredRows = normalizedCurrencyFilter
+    ? allInvoices.filter(
+        (row) => (row.invoice.currency || orgDefaultCurrency).toUpperCase() === normalizedCurrencyFilter
+      )
+    : allInvoices;
 
-  const totalDispatchedCount = allInvoices.filter(
-    (row) => ['SENT', 'VIEWED'].includes(row.invoice.status || '')
+  const kpiBuckets = aggregateLedgerByCurrency(currencyFilteredRows, orgDefaultCurrency);
+  const clientBuckets = aggregateLedgerByClient(currencyFilteredRows);
+  const bankBuckets = aggregateLedgerByBank(
+    currencyFilteredRows,
+    bankAccountsList,
+    session.organization
+  );
+
+  const totalDispatchedCount = currencyFilteredRows.filter((row) =>
+    ['SENT', 'VIEWED'].includes(row.invoice.status || '')
   ).length;
 
-  // Filter list if filter applied
+  // Filter list by status if applied
   const filteredRows = filterStatus
-    ? allInvoices.filter((row) => row.invoice.status === filterStatus.toUpperCase())
-    : allInvoices;
+    ? currencyFilteredRows.filter((row) => row.invoice.status === filterStatus.toUpperCase())
+    : currencyFilteredRows;
 
   const PAGE_SIZE = 25;
   const totalCount = filteredRows.length;
@@ -61,9 +80,14 @@ export default async function InvoicesListPage({
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const pagedRows = filteredRows.slice(startIndex, startIndex + PAGE_SIZE);
 
-  const buildPageHref = (targetPage: number, targetStatus = filterStatus) => {
+  const buildPageHref = (
+    targetPage: number,
+    targetStatus = filterStatus,
+    targetCurrency = normalizedCurrencyFilter
+  ) => {
     const params = new URLSearchParams();
     if (targetStatus && targetStatus !== 'ALL') params.set('status', targetStatus);
+    if (targetCurrency && targetCurrency !== 'ALL') params.set('currency', targetCurrency);
     if (targetPage > 1) params.set('page', String(targetPage));
     const qs = params.toString();
     return qs ? `/invoices?${qs}` : '/invoices';
@@ -102,9 +126,30 @@ export default async function InvoicesListPage({
           <span className="text-[10px] font-mono uppercase tracking-wider text-ink-ghost block mb-1">
             Total Outstanding Receivables
           </span>
-          <div className="font-mono tabular-nums text-xl sm:text-2xl font-bold text-status-brass break-words">
-            {formatCentsToCurrency(totalOutstandingCents, session.organization.defaultCurrency || 'USD')}
-          </div>
+          {kpiBuckets.length <= 1 ? (
+            <div className="font-mono tabular-nums text-xl sm:text-2xl font-bold text-status-brass break-words">
+              {formatCentsToCurrency(
+                kpiBuckets[0]?.outstandingCents || 0,
+                kpiBuckets[0]?.currency || orgDefaultCurrency
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1 mt-1">
+              {kpiBuckets.map((b) => (
+                <div
+                  key={b.currency}
+                  className="flex items-baseline justify-between gap-2 font-mono tabular-nums"
+                >
+                  <span className="text-[10px] uppercase tracking-wider text-ink-ghost">
+                    {b.currency}
+                  </span>
+                  <span className="text-base sm:text-lg font-bold text-status-brass whitespace-nowrap">
+                    {formatCentsToCurrency(b.outstandingCents, b.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
           <span className="text-[10px] font-sans text-ink-ghost mt-1 block">
             Across draft &amp; dispatched balances
           </span>
@@ -114,9 +159,30 @@ export default async function InvoicesListPage({
           <span className="text-[10px] font-mono uppercase tracking-wider text-ink-ghost block mb-1">
             Certified Paid Revenue
           </span>
-          <div className="font-mono tabular-nums text-xl sm:text-2xl font-bold text-status-hunter break-words">
-            {formatCentsToCurrency(totalPaidCents, session.organization.defaultCurrency || 'USD')}
-          </div>
+          {kpiBuckets.length <= 1 ? (
+            <div className="font-mono tabular-nums text-xl sm:text-2xl font-bold text-status-hunter break-words">
+              {formatCentsToCurrency(
+                kpiBuckets[0]?.paidCents || 0,
+                kpiBuckets[0]?.currency || orgDefaultCurrency
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1 mt-1">
+              {kpiBuckets.map((b) => (
+                <div
+                  key={b.currency}
+                  className="flex items-baseline justify-between gap-2 font-mono tabular-nums"
+                >
+                  <span className="text-[10px] uppercase tracking-wider text-ink-ghost">
+                    {b.currency}
+                  </span>
+                  <span className="text-base sm:text-lg font-bold text-status-hunter whitespace-nowrap">
+                    {formatCentsToCurrency(b.paidCents, b.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
           <span className="text-[10px] font-sans text-ink-ghost mt-1 block">
             Verified remittances cleared
           </span>
@@ -136,25 +202,67 @@ export default async function InvoicesListPage({
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-2 border-b border-obsidian-border font-mono text-xs uppercase tracking-wider no-scrollbar">
-        {statuses.map((s) => {
-          const isSelected = (!filterStatus && s === 'ALL') || filterStatus === s;
-          const href = buildPageHref(1, s);
-          return (
+      {/* Currency / Client / Bank Breakdown Strip */}
+      <LedgerBreakdownStrip
+        currencyBuckets={kpiBuckets}
+        clientBuckets={clientBuckets}
+        bankBuckets={bankBuckets}
+        defaultExpanded={allCurrencyBuckets.length > 1}
+      />
+
+      {/* Filter Tabs (Status + Currency) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-obsidian-border font-mono text-xs uppercase tracking-wider">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          {statuses.map((s) => {
+            const isSelected = (!filterStatus && s === 'ALL') || filterStatus === s;
+            const href = buildPageHref(1, s, normalizedCurrencyFilter);
+            return (
+              <Link
+                key={s}
+                href={href}
+                className={`px-3 py-1.5 rounded-[1px] shrink-0 transition-colors ${
+                  isSelected
+                    ? 'bg-bone text-obsidian font-bold shadow-sm'
+                    : 'text-bone-dark hover:text-paper hover:bg-obsidian-light'
+                }`}
+              >
+                {s}
+              </Link>
+            );
+          })}
+        </div>
+
+        {allCurrencyBuckets.length > 1 && (
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+            <span className="text-[10px] text-ink-ghost mr-1 shrink-0">Currency:</span>
             <Link
-              key={s}
-              href={href}
-              className={`px-3 py-1.5 rounded-[1px] shrink-0 transition-colors ${
-                isSelected
-                  ? 'bg-bone text-obsidian font-bold shadow-sm'
+              href={buildPageHref(1, filterStatus, 'ALL')}
+              className={`px-2.5 py-1 rounded-[1px] shrink-0 text-[11px] transition-colors ${
+                !normalizedCurrencyFilter
+                  ? 'bg-status-brass text-obsidian font-bold'
                   : 'text-bone-dark hover:text-paper hover:bg-obsidian-light'
               }`}
             >
-              {s}
+              ALL
             </Link>
-          );
-        })}
+            {allCurrencyBuckets.map((b) => {
+              const isCurSelected = normalizedCurrencyFilter === b.currency;
+              return (
+                <Link
+                  key={b.currency}
+                  href={buildPageHref(1, filterStatus, b.currency)}
+                  className={`px-2.5 py-1 rounded-[1px] shrink-0 text-[11px] transition-colors ${
+                    isCurSelected
+                      ? 'bg-status-brass text-obsidian font-bold'
+                      : 'text-bone-dark hover:text-paper hover:bg-obsidian-light'
+                  }`}
+                >
+                  {b.currency}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Invoices List (Mobile Cards + Tablet/Desktop Table) */}

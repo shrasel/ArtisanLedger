@@ -206,6 +206,11 @@ try {
     sqlite.exec('ALTER TABLE invoices ADD COLUMN show_bank_details INTEGER DEFAULT 1;');
   }
 
+  const clientCols = sqlite.prepare('PRAGMA table_info(clients)').all() as Array<{ name: string }>;
+  if (!clientCols.some((c) => c.name === 'preferred_currency')) {
+    sqlite.exec('ALTER TABLE clients ADD COLUMN preferred_currency TEXT;');
+  }
+
   // One-time backfill: migrate legacy organization bank fields into bank_accounts if none exist yet
   const orgsToMigrate = sqlite
     .prepare(

@@ -601,7 +601,13 @@ export function SettingsForm({
                   <option value="EUR">EUR (€)</option>
                   <option value="GBP">GBP (£)</option>
                   <option value="CAD">CAD ($)</option>
+                  <option value="AUD">AUD ($)</option>
+                  <option value="CHF">CHF</option>
+                  <option value="BDT">BDT (৳)</option>
                 </select>
+                <span className="text-[10px] font-sans text-ink-ghost block mt-1">
+                  Applies to newly originated invoices only; existing invoices keep their recorded currency.
+                </span>
               </div>
 
               <div>

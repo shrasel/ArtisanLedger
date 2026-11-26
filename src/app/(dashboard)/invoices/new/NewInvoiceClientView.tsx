@@ -41,6 +41,8 @@ export function NewInvoiceClientView({
     organization.defaultCustomTermsDays
   );
 
+  const defaultClientObj = initialClients.find((c) => c.id === defaultSelectedClientId);
+
   const [initialDraft, setInitialDraft] = useState<{
     invoiceNumber?: string;
     clientId?: string;
@@ -57,7 +59,7 @@ export function NewInvoiceClientView({
     clientId: defaultSelectedClientId,
     issueDate: todayStr,
     dueDate: addDaysToDateString(todayStr, defaultTermsDays),
-    currency: organization.defaultCurrency || 'USD',
+    currency: defaultClientObj?.preferredCurrency || organization.defaultCurrency || 'USD',
   });
 
   const [items, setItems] = useState<EditableItem[]>([

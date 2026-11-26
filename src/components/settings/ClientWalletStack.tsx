@@ -32,6 +32,7 @@ interface ClientFormState {
   email: string;
   phone: string;
   address: string;
+  preferredCurrency: string;
   isDefault: boolean;
 }
 
@@ -64,6 +65,7 @@ export function ClientWalletStack({
     email: '',
     phone: '',
     address: '',
+    preferredCurrency: '',
     isDefault: clientsList.length === 0,
   });
 
@@ -93,6 +95,7 @@ export function ClientWalletStack({
       email: client.email || '',
       phone: client.phone || '',
       address: client.address || '',
+      preferredCurrency: client.preferredCurrency || '',
       isDefault: client.id === defaultClientId || client.isDefault === 1,
     });
     setIsFormOpen(true);
@@ -117,6 +120,7 @@ export function ClientWalletStack({
           companyName: form.companyName.trim(),
           address: form.address.trim(),
           phone: form.phone.trim(),
+          preferredCurrency: form.preferredCurrency || null,
           isDefault: form.isDefault,
         }),
       });
@@ -314,6 +318,11 @@ export function ClientWalletStack({
                         <span>Default</span>
                       </span>
                     )}
+                    {activeClient.preferredCurrency && (
+                      <span className="px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-[#EDE8DE] text-[#18191B] border border-[#D6CFC2] font-bold rounded-[2px]">
+                        {activeClient.preferredCurrency}
+                      </span>
+                    )}
                   </div>
                   <h3
                     dir="auto"
@@ -478,7 +487,7 @@ export function ClientWalletStack({
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div>
               <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
                 Physical / Billing Address
               </label>
@@ -489,6 +498,26 @@ export function ClientWalletStack({
                 placeholder="450 Broadway, Suite 800, New York, NY 10013"
                 className="w-full bg-obsidian-light border border-obsidian-border px-3 py-2 text-xs font-sans text-paper rounded-[1px] focus:outline-none focus:border-bone"
               />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-sans uppercase font-bold tracking-wider text-ink-ghost block mb-1">
+                Preferred Invoice Currency
+              </label>
+              <select
+                value={form.preferredCurrency}
+                onChange={(e) => setForm((p) => ({ ...p, preferredCurrency: e.target.value }))}
+                className="w-full bg-obsidian-light border border-obsidian-border px-3 py-2 text-xs font-mono text-paper rounded-[1px] focus:outline-none focus:border-bone"
+              >
+                <option value="">Follow Organization Default</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="AUD">AUD ($)</option>
+                <option value="CHF">CHF</option>
+                <option value="BDT">BDT (৳)</option>
+              </select>
             </div>
 
             <div className="sm:col-span-2 flex items-center justify-between pt-2 border-t border-obsidian-border">

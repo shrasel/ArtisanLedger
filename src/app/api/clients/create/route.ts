@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const orgId = session.organization.id;
-    const { name, email, companyName, address, phone, isDefault } = await req.json();
+    const { name, email, companyName, address, phone, preferredCurrency, isDefault } = await req.json();
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         companyName: companyName || null,
         address: address || null,
         phone: phone || null,
+        preferredCurrency: preferredCurrency || null,
         isDefault: shouldBeDefault ? 1 : 0,
       })
       .returning();
