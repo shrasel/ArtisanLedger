@@ -116,7 +116,7 @@ export default async function InvoicesListPage({
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-mono uppercase tracking-widest text-obsidian bg-bone hover:bg-paper font-bold rounded-[2px] shadow-md transition-all self-start md:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Originate New Invoice</span>
+          <span>New Invoice</span>
         </Link>
       </div>
 
